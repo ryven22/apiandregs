@@ -1,10 +1,11 @@
 /**
  * REGS XD • Dashboard Controller
- * Fresh Project Initialization: All keys start empty (0)
- * Real-time Supabase Cloud Database & Vercel API integration
+ * Robust Real-time Cloud Sync with Supabase & Local Cache (Never Disappears on Refresh)
  */
 
-// App State: Starts completely empty for fresh project
+const SUPABASE_URL = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.URL) || "https://maghrxnyavkittygojnn.supabase.co";
+const SUPABASE_ANON_KEY = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.ANON_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZ2hyeG55YXZraXR0eWdvam5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzE4MTIsImV4cCI6MjEwNDc0NzgxMn0.Vr1usXkl6jHzKujpEi8SxWPA2qV8mNrW5g6imXj-tso";
+
 let allKeys = [];
 let currentFilter = 'all';
 let currentSearch = '';
@@ -14,14 +15,11 @@ let supabaseClient = null;
 
 // Initialize Supabase Client
 try {
-    if (window.supabase && window.SUPABASE_CONFIG) {
-        supabaseClient = window.supabase.createClient(
-            window.SUPABASE_CONFIG.URL,
-            window.SUPABASE_CONFIG.ANON_KEY
-        );
+    if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 } catch (e) {
-    console.warn('Supabase JS Init Warn:', e);
+    console.warn('Supabase JS Client Warn:', e);
 }
 
 // Generate Random 4x4 Alphanumeric Key: XXXX-XXXX-XXXX-XXXX
@@ -98,6 +96,13 @@ function copyKey(keyText) {
         document.body.removeChild(temp);
         showToast(`Key ${keyText} disalin!`, true);
     });
+}
+
+// Save Local Cache so Keys Never Disappear
+function saveLocalCache() {
+    try {
+        localStorage.setItem('regs_cached_keys', JSON.stringify(allKeys));
+    } catch (e) {}
 }
 
 // Calculate & Update Stat Counters
@@ -292,29 +297,46 @@ async function handleGenerateKeys(e) {
         allKeys.unshift(newObj);
     }
 
-    // Save to Supabase Cloud Database
-    if (supabaseClient) {
-        try {
-            await supabaseClient.from('license_keys').insert(
-                generated.map(k => ({
-                    key_code: k.key_code,
-                    duration_days: k.duration_days,
-                    note: `[${k.type}] ${k.note}`,
-                    is_used: false
-                }))
-            );
-        } catch (err) {
-            console.error('Supabase key insert error:', err);
-        }
-    }
-
+    // Save locally first so keys NEVER disappear
+    saveLocalCache();
     updateStats();
     renderKeysTable();
+
+    // Save to Supabase Cloud Database
+    const payload = generated.map(k => ({
+        key_code: k.key_code,
+        duration_days: k.duration_days,
+        note: `[${k.type}] ${k.note}`,
+        is_used: false
+    }));
+
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('license_keys').insert(payload);
+        } catch (err) {
+            console.error('Supabase client insert error:', err);
+        }
+    } else {
+        // Fallback: Direct REST fetch to Supabase
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/license_keys`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            console.error('Direct fetch insert error:', err);
+        }
+    }
 
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
 
-    showToast(`Berhasil membuat ${count} key lisensi (${keyType})!`, true);
+    showToast(`Berhasil membuat ${count} key lisensi (${keyType}, ${durationText})!`, true);
     logActivity(`Membuat ${count} key baru (<b style="color:#10b981">${durationText}</b>, Tipe: ${keyType}).`);
 
     // Reset optional note
@@ -359,6 +381,7 @@ function handlePauseAllKeys() {
         showToast('Semua key aktif dilanjutkan (Resumed).', true);
         logActivity('Semua key kembali aktif (Resumed).');
     }
+    saveLocalCache();
     updateStats();
     renderKeysTable();
 }
@@ -368,15 +391,25 @@ function handleRevokeKey(id) {
     const item = allKeys.find(k => k.id === id);
     if (!item) return;
     item.status = 'Revoked';
+    saveLocalCache();
     updateStats();
     renderKeysTable();
     showToast(`Key ${item.key_code} telah di-revoke.`, false);
     logActivity(`Key <b style="color:#ef4444">${item.key_code}</b> di-revoke.`);
 
+    const updatePayload = { is_used: true, note: `[REVOKED] ${item.note || ''}` };
     if (supabaseClient) {
-        supabaseClient.from('license_keys')
-            .update({ is_used: true, note: `[REVOKED] ${item.note || ''}` })
-            .eq('key_code', item.key_code);
+        supabaseClient.from('license_keys').update(updatePayload).eq('key_code', item.key_code);
+    } else {
+        fetch(`${SUPABASE_URL}/rest/v1/license_keys?key_code=eq.${item.key_code}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatePayload)
+        }).catch(() => {});
     }
 }
 
@@ -387,15 +420,22 @@ function handleDeleteKey(id) {
     if (!confirm(`Hapus key lisensi ${item.key_code}?`)) return;
 
     allKeys = allKeys.filter(k => k.id !== id);
+    saveLocalCache();
     updateStats();
     renderKeysTable();
     showToast(`Key ${item.key_code} dihapus.`, true);
     logActivity(`Key <b>${item.key_code}</b> dihapus.`);
 
     if (supabaseClient) {
-        supabaseClient.from('license_keys')
-            .delete()
-            .eq('key_code', item.key_code);
+        supabaseClient.from('license_keys').delete().eq('key_code', item.key_code);
+    } else {
+        fetch(`${SUPABASE_URL}/rest/v1/license_keys?key_code=eq.${item.key_code}`, {
+            method: 'DELETE',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        }).catch(() => {});
     }
 }
 
@@ -517,76 +557,105 @@ function handleLogout() {
     }
 }
 
-// Fetch Cloud Keys (Fresh: ignores previous setup test seeds)
+// Fetch Cloud Keys from Supabase (Never Disappears on Refresh)
 async function fetchSupabaseKeys() {
-    if (!supabaseClient) return;
-    try {
-        const { data, error } = await supabaseClient
-            .from('license_keys')
-            .select('*')
-            .order('created_at', { ascending: false });
+    let data = null;
 
-        if (!error && data) {
-            // Filter out setup test keys so project remains fresh
-            const freshData = data.filter(k => 
-                !k.key_code.includes('TEST1') && 
-                !k.key_code.includes('PRB5956') &&
-                !k.key_code.includes('TEST-SCHEMA')
-            );
-
-            if (freshData.length > 0) {
-                allKeys = freshData.map(dbKey => {
-                    const note = dbKey.note || '';
-                    let type = 'Paid';
-                    if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
-                    else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
-
-                    const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
-                    let durText = `${days} Days`;
-                    if (days === 1) durText = '1 Day';
-                    else if (days >= 3650) durText = 'Lifetime';
-
-                    const created = formatDateDisplay(dbKey.created_at);
-                    const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
-                    const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
-
-                    return {
-                        id: dbKey.id,
-                        key_code: dbKey.key_code,
-                        type: type,
-                        duration_days: days,
-                        duration_text: durText,
-                        status: dbKey.is_used ? 'Expired' : 'Active',
-                        created_at: created,
-                        expires_at: expires,
-                        device: dbKey.used_by || '-',
-                        note: note
-                    };
-                });
-            } else {
-                allKeys = [];
-            }
-            updateStats();
-            renderKeysTable();
+    if (supabaseClient) {
+        try {
+            const res = await supabaseClient
+                .from('license_keys')
+                .select('*')
+                .order('created_at', { ascending: false });
+            data = res.data;
+        } catch (e) {
+            console.warn('Supabase client select warn:', e);
         }
-    } catch (e) {
-        console.warn('Supabase fetch note:', e);
+    }
+
+    // Direct HTTP fetch fallback if client was empty or failed
+    if (!data) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/license_keys?select=*&order=created_at.desc`, {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                }
+            });
+            if (res.ok) {
+                data = await res.json();
+            }
+        } catch (e) {
+            console.warn('Direct fetch select warn:', e);
+        }
+    }
+
+    if (data && Array.isArray(data)) {
+        // Filter out old seed test keys from database setup
+        const freshData = data.filter(k => 
+            !k.key_code.includes('TEST1') && 
+            !k.key_code.includes('PRB5956') &&
+            !k.key_code.includes('TEST-SCHEMA')
+        );
+
+        if (freshData.length > 0) {
+            allKeys = freshData.map(dbKey => {
+                const note = dbKey.note || '';
+                let type = 'Paid';
+                if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
+                else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
+
+                const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
+                let durText = `${days} Days`;
+                if (days === 1) durText = '1 Day';
+                else if (days >= 3650) durText = 'Lifetime';
+
+                const created = formatDateDisplay(dbKey.created_at);
+                const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
+                const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+
+                return {
+                    id: dbKey.id,
+                    key_code: dbKey.key_code,
+                    type: type,
+                    duration_days: days,
+                    duration_text: durText,
+                    status: dbKey.is_used ? 'Expired' : 'Active',
+                    created_at: created,
+                    expires_at: expires,
+                    device: dbKey.used_by || '-',
+                    note: note
+                };
+            });
+        }
+        saveLocalCache();
+        updateStats();
+        renderKeysTable();
     }
 }
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
-    // Starts 100% empty
-    allKeys = [];
+    // 1. Instantly restore from Local Cache if exists (Zero blink on refresh!)
+    try {
+        const cached = localStorage.getItem('regs_cached_keys');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                allKeys = parsed;
+            }
+        }
+    } catch (e) {}
+
     updateStats();
     renderKeysTable();
 
-    // Check Login State
+    // 2. Check Login State
     const isLogged = localStorage.getItem('regs_owner_logged');
     if (isLogged !== 'true') {
         document.getElementById('loginModal').classList.remove('hidden');
     }
 
-    // Load any real database keys
+    // 3. Sync live keys with Supabase Cloud
     fetchSupabaseKeys();
 });
