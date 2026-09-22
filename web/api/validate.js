@@ -40,11 +40,11 @@ export default async function handler(req, res) {
             if (rows && rows.length > 0) {
                 const keyData = rows[0];
 
-                // Cek jika key di-revoke
-                if (keyData.note && keyData.note.includes('[REVOKED]')) {
+                // Cek jika key di-revoke atau dihapus
+                if (keyData.note && (keyData.note.includes('[REVOKED]') || keyData.note.includes('[DELETED]'))) {
                     return res.status(403).json({
                         success: false,
-                        message: 'Kode lisensi ini telah dinonaktifkan (Revoked) oleh Owner.'
+                        message: 'Kode lisensi ini telah dinonaktifkan atau dihapus oleh Owner.'
                     });
                 }
 

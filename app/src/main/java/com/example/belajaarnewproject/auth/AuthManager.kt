@@ -225,10 +225,10 @@ object AuthManager {
                 if (arr.length() > 0) {
                     val keyObj = arr.getJSONObject(0)
 
-                    // Cek jika key dinonaktifkan (Revoked)
+                    // Cek jika key dinonaktifkan (Revoked) atau dihapus
                     val note = keyObj.optString("note", "")
-                    if (note.contains("[REVOKED]")) {
-                        return@withContext false to "Kode lisensi ini telah dinonaktifkan (Revoked) oleh Owner."
+                    if (note.contains("[REVOKED]") || note.contains("[DELETED]")) {
+                        return@withContext false to "Kode lisensi ini telah dinonaktifkan atau dihapus oleh Owner."
                     }
 
                     val duration = keyObj.optInt("duration_days", 1)

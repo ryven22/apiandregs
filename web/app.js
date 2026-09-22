@@ -426,17 +426,19 @@ function handleDeleteKey(id) {
     showToast(`Key ${item.key_code} dihapus.`, true);
     logActivity(`Key <b>${item.key_code}</b> dihapus.`);
 
+    const delPayload = { note: `[DELETED] ${item.note || ''}`, is_used: true };
     if (supabaseClient) {
-        supabaseClient.from('license_keys').delete().eq('key_code', item.key_code);
-    } else {
-        fetch(`${SUPABASE_URL}/rest/v1/license_keys?key_code=eq.${item.key_code}`, {
-            method: 'DELETE',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
-        }).catch(() => {});
+        supabaseClient.from('license_keys').update(delPayload).eq('key_code', item.key_code);
     }
+    fetch(`${SUPABASE_URL}/rest/v1/license_keys?key_code=eq.${item.key_code}`, {
+        method: 'PATCH',
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(delPayload)
+    }).catch(() => {});
 }
 
 // Switch Navigation View
@@ -591,43 +593,43 @@ async function fetchSupabaseKeys() {
     }
 
     if (data && Array.isArray(data)) {
-        // Filter out old seed test keys from database setup
+        // Filter out old seed test keys and deleted keys
         const freshData = data.filter(k => 
             !k.key_code.includes('TEST1') && 
             !k.key_code.includes('PRB5956') &&
-            !k.key_code.includes('TEST-SCHEMA')
+            !k.key_code.includes('TEST-SCHEMA') &&
+            !(k.note && k.note.includes('[DELETED]'))
         );
 
-        if (freshData.length > 0) {
-            allKeys = freshData.map(dbKey => {
-                const note = dbKey.note || '';
-                let type = 'Paid';
-                if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
-                else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
+        allKeys = freshData.map(dbKey => {
+            const note = dbKey.note || '';
+            let type = 'Paid';
+            if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
+            else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
 
-                const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
-                let durText = `${days} Days`;
-                if (days === 1) durText = '1 Day';
-                else if (days >= 3650) durText = 'Lifetime';
+            const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
+            let durText = `${days} Days`;
+            if (days === 1) durText = '1 Day';
+            else if (days >= 3650) durText = 'Lifetime';
 
-                const created = formatDateDisplay(dbKey.created_at);
-                const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
-                const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+            const created = formatDateDisplay(dbKey.created_at);
+            const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
+            const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
 
-                return {
-                    id: dbKey.id,
-                    key_code: dbKey.key_code,
-                    type: type,
-                    duration_days: days,
-                    duration_text: durText,
-                    status: dbKey.is_used ? 'Expired' : 'Active',
-                    created_at: created,
-                    expires_at: expires,
-                    device: dbKey.used_by || '-',
-                    note: note
-                };
-            });
-        }
+            return {
+                id: dbKey.id,
+                key_code: dbKey.key_code,
+                type: type,
+                duration_days: days,
+                duration_text: durText,
+                status: dbKey.is_used ? 'Expired' : 'Active',
+                created_at: created,
+                expires_at: expires,
+                device: dbKey.used_by || '-',
+                note: note
+            };
+        });
+
         saveLocalCache();
         updateStats();
         renderKeysTable();
@@ -636,13 +638,19 @@ async function fetchSupabaseKeys() {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Instantly restore from Local Cache if exists (Zero blink on refresh!)
+    // 1. Instantly restore from Local Cache if exists
     try {
         const cached = localStorage.getItem('regs_cached_keys');
         if (cached) {
             const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                allKeys = parsed;
+            if (Array.isArray(parsed)) {
+                allKeys = parsed.filter(k => 
+                    !k.key_code.includes('TEST1') && 
+                    !k.key_code.includes('PRB5956') &&
+                    !k.key_code.includes('TEST-SCHEMA') &&
+                    !(k.note && k.note.includes('[DELETED]')) &&
+                    !['LTS4-EQA2-EPAZ-8266', 'M59F-74RF-71UE-MCFM', 'Z6UH-FFBU-O59B-U5G7', '69IM-O9DL-A6NS-VJPA', 'DTSF-VI4B-D3HR-5CWQ'].includes(k.key_code)
+                );
             }
         }
     } catch (e) {}
