@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REGS XD • Database & Key Management Portal</title>
-    <meta name="description" content="Official License Key Generator & Management Dashboard for REGS XD / CENA X REGS">
+    <title>REGS XD • Database & Key Management</title>
+    <meta name="description" content="License Key Generator & Database Management Dashboard">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,10 +19,11 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand-row">
-                    <div class="brand-icon">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#dc2626" stroke="#ef4444"/>
-                            <path d="M12 8v5M12 16h.01" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                    <div class="brand-emblem">
+                        <svg viewBox="0 0 36 36" width="34" height="34">
+                            <circle cx="18" cy="18" r="16" fill="#13141a" stroke="#dc2626" stroke-width="2" />
+                            <text x="18" y="15" text-anchor="middle" fill="#ef4444" font-size="8.5" font-weight="900" font-family="'JetBrains Mono', monospace" letter-spacing="0.5">REGS</text>
+                            <text x="18" y="25" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="900" font-family="'JetBrains Mono', monospace" letter-spacing="1">XD</text>
                         </svg>
                     </div>
                     <div class="brand-text">
@@ -54,7 +55,6 @@
                             <polyline points="14 2 14 8 20 8"/>
                             <line x1="16" y1="13" x2="8" y2="13"/>
                             <line x1="16" y1="17" x2="8" y2="17"/>
-                            <polyline points="10 9 9 9 8 9"/>
                         </svg>
                     </span>
                     <span class="nav-label">License</span>
@@ -131,8 +131,12 @@
             <!-- Mobile Top Bar -->
             <div class="mobile-bar">
                 <div class="brand-row">
-                    <div class="brand-icon-sm">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#dc2626"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+                    <div class="brand-emblem-sm">
+                        <svg viewBox="0 0 36 36" width="28" height="28">
+                            <circle cx="18" cy="18" r="16" fill="#13141a" stroke="#dc2626" stroke-width="2" />
+                            <text x="18" y="15" text-anchor="middle" fill="#ef4444" font-size="8.5" font-weight="900" font-family="'JetBrains Mono', monospace">REGS</text>
+                            <text x="18" y="25" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="900" font-family="'JetBrains Mono', monospace">XD</text>
+                        </svg>
                     </div>
                     <span class="brand-name">REGS XD</span>
                 </div>
@@ -143,7 +147,7 @@
                 </button>
             </div>
 
-            <!-- View: Keys (Main View matching Screenshot) -->
+            <!-- View: Keys (Main View) -->
             <section class="view-panel active" id="viewKeys">
                 
                 <!-- View Header -->
@@ -152,14 +156,14 @@
                     <p class="view-subtitle">Generate and manage all license keys</p>
                 </div>
 
-                <!-- Stat Counters Row (5 Cards) -->
+                <!-- Stat Counters Row (5 Cards) - Clean 0 Start -->
                 <div class="stats-row">
                     <div class="stat-card">
-                        <div class="stat-num" id="statTotal">10</div>
+                        <div class="stat-num" id="statTotal">0</div>
                         <div class="stat-label">TOTAL</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num" id="statPaid">10</div>
+                        <div class="stat-num" id="statPaid">0</div>
                         <div class="stat-label">PAID</div>
                     </div>
                     <div class="stat-card">
@@ -167,11 +171,11 @@
                         <div class="stat-label">FREE</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num text-green" id="statValid">9</div>
+                        <div class="stat-num text-green" id="statValid">0</div>
                         <div class="stat-label">VALID</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num text-red" id="statExpired">1</div>
+                        <div class="stat-num text-red" id="statExpired">0</div>
                         <div class="stat-label">EXPIRED</div>
                     </div>
                 </div>
@@ -250,7 +254,6 @@
                         <div class="form-col action-col">
                             <button type="submit" id="btnGenSubmit" class="btn-generate-red">
                                 <span class="btn-text">Generate Key</span>
-                                <span class="spinner hidden"></span>
                             </button>
                         </div>
                     </form>
@@ -260,7 +263,7 @@
                 <div class="card-panel">
                     <div class="table-top-bar">
                         <div class="table-title-group">
-                            <h2 class="table-heading" id="tableHeading">ALL KEYS (10)</h2>
+                            <h2 class="table-heading" id="tableHeading">ALL KEYS (0)</h2>
                         </div>
 
                         <div class="table-controls">
@@ -300,7 +303,11 @@
                                 </tr>
                             </thead>
                             <tbody id="keysTableBody">
-                                <!-- Populated dynamically by JavaScript -->
+                                <tr>
+                                    <td colspan="8" class="empty-keys-msg">
+                                        Belum ada key lisensi. Silakan buat key baru pada form di atas.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -308,10 +315,10 @@
 
             </section>
 
-            <!-- View: License Check / Redeem -->
+            <!-- View: License Check -->
             <section class="view-panel" id="viewLicense">
                 <div class="view-header">
-                    <h1 class="view-title">License Lookup & Validation</h1>
+                    <h1 class="view-title">License Lookup</h1>
                     <p class="view-subtitle">Periksa status, durasi, dan masa aktif lisensi</p>
                 </div>
                 <div class="card-panel">
@@ -326,20 +333,20 @@
             <!-- View: Revenue -->
             <section class="view-panel" id="viewRevenue">
                 <div class="view-header">
-                    <h1 class="view-title">Revenue & Sales</h1>
+                    <h1 class="view-title">Revenue</h1>
                     <p class="view-subtitle">Ringkasan estimasi penjualan paket lisensi</p>
                 </div>
                 <div class="stats-row">
                     <div class="stat-card">
-                        <div class="stat-num text-green" id="revTotalRp">Rp 1.450.000</div>
+                        <div class="stat-num text-green" id="revTotalRp">Rp 0</div>
                         <div class="stat-label">TOTAL ESTIMASI OMSET</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num" id="revPaidCount">10</div>
+                        <div class="stat-num" id="revPaidCount">0</div>
                         <div class="stat-label">PAID LICENSES</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num text-green">100%</div>
+                        <div class="stat-num text-green" id="revRate">0%</div>
                         <div class="stat-label">PAID RATE</div>
                     </div>
                 </div>
@@ -349,34 +356,39 @@
             <section class="view-panel" id="viewAnalytics">
                 <div class="view-header">
                     <h1 class="view-title">Analytics</h1>
-                    <p class="view-subtitle">Distribusi durasi dan statistik lisensi</p>
+                    <p class="view-subtitle">Distribusi durasi paket lisensi</p>
                 </div>
                 <div class="card-panel">
-                    <div class="analytics-grid">
+                    <div class="analytics-grid" id="analyticsGrid">
                         <div class="analytics-item">
                             <span class="a-label">1 Day Keys</span>
-                            <div class="a-bar"><div class="a-fill" style="width: 25%"></div></div>
-                            <span class="a-val">2 Keys</span>
+                            <div class="a-bar"><div class="a-fill" id="bar1D" style="width: 0%"></div></div>
+                            <span class="a-val" id="val1D">0 Keys</span>
                         </div>
                         <div class="analytics-item">
                             <span class="a-label">3 Days Keys</span>
-                            <div class="a-bar"><div class="a-fill" style="width: 15%"></div></div>
-                            <span class="a-val">1 Key</span>
+                            <div class="a-bar"><div class="a-fill" id="bar3D" style="width: 0%"></div></div>
+                            <span class="a-val" id="val3D">0 Keys</span>
                         </div>
                         <div class="analytics-item">
                             <span class="a-label">7 Days Keys</span>
-                            <div class="a-bar"><div class="a-fill" style="width: 45%"></div></div>
-                            <span class="a-val">4 Keys</span>
+                            <div class="a-bar"><div class="a-fill" id="bar7D" style="width: 0%"></div></div>
+                            <span class="a-val" id="val7D">0 Keys</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="a-label">15 Days Keys</span>
+                            <div class="a-bar"><div class="a-fill" id="bar15D" style="width: 0%"></div></div>
+                            <span class="a-val" id="val15D">0 Keys</span>
                         </div>
                         <div class="analytics-item">
                             <span class="a-label">30 Days Keys</span>
-                            <div class="a-bar"><div class="a-fill" style="width: 20%"></div></div>
-                            <span class="a-val">2 Keys</span>
+                            <div class="a-bar"><div class="a-fill" id="bar30D" style="width: 0%"></div></div>
+                            <span class="a-val" id="val30D">0 Keys</span>
                         </div>
                         <div class="analytics-item">
                             <span class="a-label">Lifetime Keys</span>
-                            <div class="a-bar"><div class="a-fill" style="width: 10%"></div></div>
-                            <span class="a-val">1 Key</span>
+                            <div class="a-bar"><div class="a-fill" id="barLife" style="width: 0%"></div></div>
+                            <span class="a-val" id="valLife">0 Keys</span>
                         </div>
                     </div>
                 </div>
@@ -390,7 +402,7 @@
                 </div>
                 <div class="card-panel">
                     <div class="activity-stream" id="activityStream">
-                        <!-- Populated by JS -->
+                        <div class="empty-activity">Belum ada aktivitas.</div>
                     </div>
                 </div>
             </section>
@@ -398,31 +410,31 @@
             <!-- View: Settings -->
             <section class="view-panel" id="viewSettings">
                 <div class="view-header">
-                    <h1 class="view-title">System Settings</h1>
-                    <p class="view-subtitle">Konfigurasi Database Cloud & API Vercel</p>
+                    <h1 class="view-title">Settings</h1>
+                    <p class="view-subtitle">Konfigurasi Database Cloud & API</p>
                 </div>
                 <div class="card-panel">
                     <div class="settings-group">
                         <div class="setting-row">
                             <div>
                                 <div class="setting-name">Database Cloud (Supabase)</div>
-                                <div class="setting-desc">Status koneksi PostgreSQL REST API</div>
+                                <div class="setting-desc">Status koneksi PostgreSQL REST</div>
                             </div>
-                            <span class="badge-pill active-badge">Connected (Online)</span>
+                            <span class="badge-pill active-badge">Connected</span>
                         </div>
                         <div class="setting-row">
                             <div>
-                                <div class="setting-name">Vercel Serverless REST API</div>
+                                <div class="setting-name">Serverless REST API</div>
                                 <div class="setting-desc">Endpoint https://apiandregs.vercel.app/api/*</div>
                             </div>
-                            <span class="badge-pill active-badge">Deployed (Live)</span>
+                            <span class="badge-pill active-badge">Live</span>
                         </div>
                         <div class="setting-row">
                             <div>
-                                <div class="setting-name">Format Key Otomatis</div>
-                                <div class="setting-desc">Format acak 4 blok karakter (XXXX-XXXX-XXXX-XXXX)</div>
+                                <div class="setting-name">Format Key</div>
+                                <div class="setting-desc">Format acak alfanumerik 4x4 (XXXX-XXXX-XXXX-XXXX)</div>
                             </div>
-                            <span class="badge-pill">Alphanumeric 16-Chars</span>
+                            <span class="badge-pill">16-Chars Alphanumeric</span>
                         </div>
                     </div>
                 </div>
@@ -432,15 +444,15 @@
             <section class="view-panel" id="viewOwner">
                 <div class="view-header">
                     <h1 class="view-title">Owner Panel</h1>
-                    <p class="view-subtitle">Akses Khusus Master Admin RegsXD</p>
+                    <p class="view-subtitle">Manajemen dan backup data lisensi</p>
                 </div>
                 <div class="card-panel">
                     <div class="owner-controls">
                         <button type="button" class="btn-generate-red" onclick="exportKeysCSV()">
-                            ⬇️ Export Semua Key (CSV)
+                            Export CSV
                         </button>
                         <button type="button" class="btn-amber-outline" onclick="exportKeysJSON()">
-                            💾 Export JSON Backup
+                            Export JSON Backup
                         </button>
                     </div>
                 </div>
@@ -449,38 +461,34 @@
         </main>
     </div>
 
-    <!-- Login Modal (Muncul jika belum login Owner) -->
+    <!-- Login Modal: Clean Username & Password -->
     <div class="modal-backdrop hidden" id="loginModal">
         <div class="login-modal-box">
             <div class="login-modal-header">
-                <div class="brand-icon-modal">
-                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-                        <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#dc2626"/>
+                <div class="brand-emblem-modal">
+                    <svg viewBox="0 0 36 36" width="46" height="46">
+                        <circle cx="18" cy="18" r="16" fill="#13141a" stroke="#dc2626" stroke-width="2" />
+                        <text x="18" y="15" text-anchor="middle" fill="#ef4444" font-size="8.5" font-weight="900" font-family="'JetBrains Mono', monospace" letter-spacing="0.5">REGS</text>
+                        <text x="18" y="25" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="900" font-family="'JetBrains Mono', monospace" letter-spacing="1">XD</text>
                     </svg>
                 </div>
-                <h2 class="modal-title">REGS XD • OWNER ACCESS</h2>
-                <p class="modal-subtitle">Masuk untuk membuka dashboard generate key & database</p>
+                <h2 class="modal-title">REGS XD</h2>
+                <p class="modal-subtitle">Login to access dashboard</p>
             </div>
 
             <form onsubmit="handleModalLogin(event)">
                 <div class="input-field-group">
-                    <label class="field-label" for="loginUsername">USERNAME / EMAIL</label>
-                    <input type="text" id="loginUsername" class="dark-input" placeholder="regsxd18" required>
+                    <label class="field-label" for="loginUsername">USERNAME</label>
+                    <input type="text" id="loginUsername" class="dark-input" placeholder="Username" required autocomplete="username">
                 </div>
 
                 <div class="input-field-group">
-                    <label class="field-label" for="loginPass">KATA SANDI</label>
-                    <input type="password" id="loginPass" class="dark-input" placeholder="••••••••" required>
-                </div>
-
-                <div class="quick-admin-box">
-                    <button type="button" class="btn-quick-fill" onclick="quickFillAdmin()">
-                        ⚡ Gunakan Akun Owner (regsxd18)
-                    </button>
+                    <label class="field-label" for="loginPass">PASSWORD</label>
+                    <input type="password" id="loginPass" class="dark-input" placeholder="••••••••" required autocomplete="current-password">
                 </div>
 
                 <button type="submit" id="btnModalSubmit" class="btn-modal-login">
-                    BUKA DASHBOARD
+                    Login
                 </button>
             </form>
         </div>

@@ -84,12 +84,15 @@ body {
     gap: 10px;
 }
 
-.brand-icon {
-    width: 32px;
-    height: 32px;
+.brand-emblem, .brand-emblem-sm, .brand-emblem-modal {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-emblem-modal {
+    margin: 0 auto 12px auto;
 }
 
 .brand-name {
@@ -754,6 +757,61 @@ body {
     color: #ff6b7b;
 }
 
+.empty-keys-msg {
+    text-align: center;
+    padding: 42px 16px;
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.empty-activity {
+    color: var(--text-dark);
+    font-size: 13px;
+    padding: 12px 0;
+}
+
+/* Analytics */
+.analytics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.analytics-item {
+    display: grid;
+    grid-template-columns: 140px 1fr 120px;
+    align-items: center;
+    gap: 16px;
+}
+
+.a-label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.a-bar {
+    height: 8px;
+    background: #191b22;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.a-fill {
+    height: 100%;
+    background: var(--red-primary);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.a-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-white);
+    text-align: right;
+}
+
 /* ---------------- Login Modal ---------------- */
 .modal-backdrop {
     position: fixed;
@@ -820,29 +878,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 16px;
-}
-
-.quick-admin-box {
     margin-bottom: 18px;
-}
-
-.btn-quick-fill {
-    width: 100%;
-    background: #17181f;
-    border: 1px dashed rgba(220, 38, 38, 0.6);
-    color: #f87171;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 9px;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-quick-fill:hover {
-    background: rgba(220, 38, 38, 0.15);
-    border-color: var(--red-primary);
 }
 
 .btn-modal-login {

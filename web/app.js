@@ -1,134 +1,10 @@
 /**
- * REGS XD • Dashboard Controller & Real-Time Key Engine
- * Formats: Random 4x4 Blocks (XXXX-XXXX-XXXX-XXXX)
- * Integration: Supabase Database Cloud & Vercel API
+ * REGS XD • Dashboard Controller
+ * Fresh Project Initialization: All keys start empty (0)
+ * Real-time Supabase Cloud Database & Vercel API integration
  */
 
-// Initial Seed Data matching the User's Screenshot exactly (10 keys)
-const INITIAL_KEYS = [
-    {
-        id: 'seed-1',
-        key_code: '0VAW-LPE4-XSHQ-QUHJ',
-        type: 'Paid',
-        duration_days: 1,
-        duration_text: '1 Day',
-        status: 'Active',
-        created_at: '21 Sept 2026',
-        expires_at: '22 Sept 2026',
-        device: '00754884-38F7-42...',
-        note: 'VIP user'
-    },
-    {
-        id: 'seed-2',
-        key_code: '8P53-C8VC-SZNV-1TF7',
-        type: 'Paid',
-        duration_days: 3,
-        duration_text: '3 Days',
-        status: 'Active',
-        created_at: '20 Sept 2026',
-        expires_at: '23 Sept 2026',
-        device: '996AC412-5C42-49...',
-        note: 'Telegram VIP'
-    },
-    {
-        id: 'seed-3',
-        key_code: 'DMMJ-5024-HGSE-QGUE',
-        type: 'Paid',
-        duration_days: 7,
-        duration_text: '7 Days',
-        status: 'Active',
-        created_at: '20 Sept 2026',
-        expires_at: '27 Sept 2026',
-        device: 'D9C1322C-C41A-40...',
-        note: 'Fast Turnament'
-    },
-    {
-        id: 'seed-4',
-        key_code: '1GTM-AZ48-BJW7-5ZH3',
-        type: 'Paid',
-        duration_days: 1,
-        duration_text: '1 Day',
-        status: 'Expired',
-        created_at: '20 Sept 2026',
-        expires_at: '21 Sept 2026',
-        device: '0359D338-8CB7-4E...',
-        note: 'Trial user'
-    },
-    {
-        id: 'seed-5',
-        key_code: '6HRM-FCZT-R3LH-YLTS',
-        type: 'Owner',
-        duration_days: 7,
-        duration_text: '7 Days',
-        status: 'Active',
-        created_at: '20 Sept 2026',
-        expires_at: '27 Sept 2026',
-        device: '4E353C67-8377-4F...',
-        note: 'Admin Regs'
-    },
-    {
-        id: 'seed-6',
-        key_code: 'G9GJ-2UBU-9KDT-VFCQ',
-        type: 'Paid',
-        duration_days: 30,
-        duration_text: '30 Days',
-        status: 'Active',
-        created_at: '19 Sept 2026',
-        expires_at: '19 Oct 2026',
-        device: 'CC82ADFE-549B-46...',
-        note: 'Monthly VIP'
-    },
-    {
-        id: 'seed-7',
-        key_code: '4TD0-ETUL-DRY9-5FU0',
-        type: 'Paid',
-        duration_days: 7,
-        duration_text: '7 Days',
-        status: 'Active',
-        created_at: '18 Sept 2026',
-        expires_at: '25 Sept 2026',
-        device: 'DC29F3CF-13FC-45...',
-        note: 'Streamer Regs'
-    },
-    {
-        id: 'seed-8',
-        key_code: 'ZS10-LH06-WEXX-CVKN',
-        type: 'Owner',
-        duration_days: 36500,
-        duration_text: 'Lifetime',
-        status: 'Active',
-        created_at: '18 Sept 2026',
-        expires_at: '25 Aug 2126',
-        device: '4BF16D4D-D061-46...',
-        note: 'Owner Master Key'
-    },
-    {
-        id: 'seed-9',
-        key_code: 'K3N9-8YRA-2PLM-90QW',
-        type: 'Paid',
-        duration_days: 15,
-        duration_text: '15 Days',
-        status: 'Active',
-        created_at: '17 Sept 2026',
-        expires_at: '02 Oct 2026',
-        device: 'E8314F29-01BA-48...',
-        note: 'Reseller Key'
-    },
-    {
-        id: 'seed-10',
-        key_code: '7XWQ-V92P-MM4T-LK91',
-        type: 'Paid',
-        duration_days: 30,
-        duration_text: '30 Days',
-        status: 'Active',
-        created_at: '16 Sept 2026',
-        expires_at: '16 Oct 2026',
-        device: 'B1920834-55C1-39...',
-        note: 'Pro Gamer VIP'
-    }
-];
-
-// App State
+// App State: Starts completely empty for fresh project
 let allKeys = [];
 let currentFilter = 'all';
 let currentSearch = '';
@@ -155,16 +31,10 @@ function generateRandomKey() {
     return `${seg()}-${seg()}-${seg()}-${seg()}`;
 }
 
-// Generate Masked Device ID
-function generateRandomDeviceId() {
-    const hex = () => Math.random().toString(16).substring(2, 6).toUpperCase();
-    return `${hex()}${hex()}-${hex()}-${hex()}...`;
-}
-
-// Format Date e.g. "21 Sept 2026"
+// Format Date e.g. "22 Sept 2026"
 function formatDateDisplay(d) {
     const date = new Date(d);
-    if (isNaN(date.getTime())) return '21 Sept 2026';
+    if (isNaN(date.getTime())) return '-';
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sept', 'Okt', 'Nov', 'Des'];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
@@ -173,6 +43,9 @@ function formatDateDisplay(d) {
 function logActivity(text) {
     const stream = document.getElementById('activityStream');
     if (!stream) return;
+    const emptyMsg = stream.querySelector('.empty-activity');
+    if (emptyMsg) emptyMsg.remove();
+
     const timeStr = new Date().toLocaleTimeString('id-ID');
     const div = document.createElement('div');
     div.className = 'activity-item';
@@ -184,7 +57,7 @@ function logActivity(text) {
     stream.prepend(div);
 }
 
-// Show Toast
+// Show Toast Notification
 function showToast(message, isSuccess = true) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -214,7 +87,7 @@ function setDurationMode(mode) {
 // Copy Key to Clipboard
 function copyKey(keyText) {
     navigator.clipboard.writeText(keyText).then(() => {
-        showToast(`📋 Key ${keyText} disalin ke clipboard!`, true);
+        showToast(`Key ${keyText} disalin!`, true);
         logActivity(`Key <b style="color:#dc2626">${keyText}</b> disalin.`);
     }).catch(() => {
         const temp = document.createElement('textarea');
@@ -223,7 +96,7 @@ function copyKey(keyText) {
         temp.select();
         document.execCommand('copy');
         document.body.removeChild(temp);
-        showToast(`📋 Key ${keyText} disalin ke clipboard!`, true);
+        showToast(`Key ${keyText} disalin!`, true);
     });
 }
 
@@ -242,6 +115,7 @@ function updateStats() {
     document.getElementById('statExpired').textContent = expired;
     document.getElementById('tableHeading').textContent = `ALL KEYS (${total})`;
 
+    // Revenue Update
     const revPaid = document.getElementById('revPaidCount');
     if (revPaid) revPaid.textContent = paid;
     const revTotal = document.getElementById('revTotalRp');
@@ -249,6 +123,41 @@ function updateStats() {
         const estRp = paid * 145000;
         revTotal.textContent = `Rp ${estRp.toLocaleString('id-ID')}`;
     }
+    const revRate = document.getElementById('revRate');
+    if (revRate) {
+        const rate = total > 0 ? Math.round((paid / total) * 100) : 0;
+        revRate.textContent = `${rate}%`;
+    }
+
+    // Analytics Breakdown Update
+    updateAnalytics();
+}
+
+function updateAnalytics() {
+    const total = allKeys.length;
+    const count1D = allKeys.filter(k => k.duration_days === 1).length;
+    const count3D = allKeys.filter(k => k.duration_days === 3).length;
+    const count7D = allKeys.filter(k => k.duration_days === 7).length;
+    const count15D = allKeys.filter(k => k.duration_days === 15).length;
+    const count30D = allKeys.filter(k => k.duration_days === 30).length;
+    const countLife = allKeys.filter(k => k.duration_days >= 3650).length;
+
+    const setBar = (barId, valId, count) => {
+        const bar = document.getElementById(barId);
+        const val = document.getElementById(valId);
+        if (bar && val) {
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            bar.style.width = `${pct}%`;
+            val.textContent = `${count} Keys (${pct}%)`;
+        }
+    };
+
+    setBar('bar1D', 'val1D', count1D);
+    setBar('bar3D', 'val3D', count3D);
+    setBar('bar7D', 'val7D', count7D);
+    setBar('bar15D', 'val15D', count15D);
+    setBar('bar30D', 'val30D', count30D);
+    setBar('barLife', 'valLife', countLife);
 }
 
 // Render Table Rows
@@ -276,8 +185,8 @@ function renderKeysTable() {
     if (filtered.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 36px; color: #6b7280;">
-                    Tidak ada key yang sesuai dengan pencarian atau filter.
+                <td colspan="8" class="empty-keys-msg">
+                    Belum ada key lisensi. Silakan buat key baru pada form di atas.
                 </td>
             </tr>
         `;
@@ -399,7 +308,7 @@ async function handleGenerateKeys(e) {
         }
     }
 
-    // Call Vercel API asynchronously to keep backend in sync
+    // Call Vercel API asynchronously
     fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -409,7 +318,7 @@ async function handleGenerateKeys(e) {
             type: keyType,
             note: note
         })
-    }).catch(err => console.log('API sync background:', err));
+    }).catch(err => console.log('API sync:', err));
 
     updateStats();
     renderKeysTable();
@@ -417,7 +326,7 @@ async function handleGenerateKeys(e) {
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
 
-    showToast(`✅ Berhasil membuat ${count} key lisensi (${keyType})!`, true);
+    showToast(`Berhasil membuat ${count} key lisensi (${keyType})!`, true);
     logActivity(`Membuat ${count} key baru (<b style="color:#10b981">${durationText}</b>, Tipe: ${keyType}).`);
 
     // Reset optional note
@@ -444,13 +353,13 @@ function handlePauseAllKeys() {
     isPausedAll = !isPausedAll;
     const btn = document.getElementById('btnPauseAll');
     if (isPausedAll) {
-        btn.textContent = '▶️ Resume All Keys';
+        btn.textContent = 'Resume All Keys';
         btn.style.color = '#10b981';
         btn.style.borderColor = '#10b981';
         allKeys.forEach(k => {
             if (k.status === 'Active') k.status = 'Paused';
         });
-        showToast('⏸️ Semua key aktif dijeda (Paused).', true);
+        showToast('Semua key aktif dijeda (Paused).', true);
         logActivity('Semua key dijeda (Paused).');
     } else {
         btn.textContent = 'Pause All Keys';
@@ -459,7 +368,7 @@ function handlePauseAllKeys() {
         allKeys.forEach(k => {
             if (k.status === 'Paused') k.status = 'Active';
         });
-        showToast('▶️ Semua key aktif dilanjutkan (Resumed).', true);
+        showToast('Semua key aktif dilanjutkan (Resumed).', true);
         logActivity('Semua key kembali aktif (Resumed).');
     }
     updateStats();
@@ -473,7 +382,7 @@ function handleRevokeKey(id) {
     item.status = 'Revoked';
     updateStats();
     renderKeysTable();
-    showToast(`⚠️ Key ${item.key_code} telah di-revoke.`, false);
+    showToast(`Key ${item.key_code} telah di-revoke.`, false);
     logActivity(`Key <b style="color:#ef4444">${item.key_code}</b> di-revoke.`);
 
     if (supabaseClient) {
@@ -492,7 +401,7 @@ function handleDeleteKey(id) {
     allKeys = allKeys.filter(k => k.id !== id);
     updateStats();
     renderKeysTable();
-    showToast(`🗑️ Key ${item.key_code} dihapus.`, true);
+    showToast(`Key ${item.key_code} dihapus.`, true);
     logActivity(`Key <b>${item.key_code}</b> dihapus.`);
 
     if (supabaseClient) {
@@ -551,7 +460,7 @@ async function handleValidateLookup() {
         if (data.success) {
             resBox.innerHTML = `
                 <div style="background:#13281d; border:1px solid #10b981; padding:14px; border-radius:8px; margin-top:14px;">
-                    <div style="color:#10b981; font-weight:700; font-size:14px;">✅ LISENSI VALID & AKTIF</div>
+                    <div style="color:#10b981; font-weight:700; font-size:14px;">LISENSI VALID & AKTIF</div>
                     <div style="margin-top:6px; font-size:13px; color:#ffffff;">Key: <b>${data.key}</b></div>
                     <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Role: ${data.role} | Durasi: ${data.expiry}</div>
                 </div>
@@ -559,7 +468,7 @@ async function handleValidateLookup() {
         } else {
             resBox.innerHTML = `
                 <div style="background:#281316; border:1px solid #ef4444; padding:14px; border-radius:8px; margin-top:14px;">
-                    <div style="color:#ef4444; font-weight:700; font-size:14px;">❌ LISENSI TIDAK VALID</div>
+                    <div style="color:#ef4444; font-weight:700; font-size:14px;">LISENSI TIDAK VALID</div>
                     <div style="margin-top:4px; font-size:12px; color:#d1d5db;">${data.message || 'Key tidak terdaftar.'}</div>
                 </div>
             `;
@@ -581,7 +490,7 @@ function exportKeysCSV() {
     a.href = url;
     a.download = `REGS_XD_KEYS_${Date.now()}.csv`;
     a.click();
-    showToast('💾 Berhasil mendownload backup CSV.', true);
+    showToast('Berhasil mendownload backup CSV.', true);
 }
 
 // Export JSON
@@ -591,15 +500,10 @@ function exportKeysJSON() {
     a.href = dataStr;
     a.download = `REGS_XD_KEYS_${Date.now()}.json`;
     a.click();
-    showToast('💾 Berhasil mendownload backup JSON.', true);
+    showToast('Berhasil mendownload backup JSON.', true);
 }
 
-// Modal Login Functions
-function quickFillAdmin() {
-    document.getElementById('loginUsername').value = 'regsxd18';
-    document.getElementById('loginPass').value = 'leaaaimut1';
-}
-
+// Modal Login: Clean Username & Password
 function handleModalLogin(e) {
     e.preventDefault();
     const u = document.getElementById('loginUsername').value.trim();
@@ -608,22 +512,24 @@ function handleModalLogin(e) {
     if ((u === 'regsxd18' || u === 'regsxd18@cena-regs.com') && p === 'leaaaimut1') {
         localStorage.setItem('regs_owner_logged', 'true');
         document.getElementById('loginModal').classList.add('hidden');
-        showToast('👑 Selamat datang kembali, Owner RegsXD!', true);
-        logActivity('Owner login: <b>regsxd18</b>');
+        showToast('Selamat datang, regsxd18!', true);
+        logActivity('Login: <b>regsxd18</b>');
     } else {
-        alert('Kredensial Owner Salah! Silakan gunakan akun Owner: regsxd18 / leaaaimut1');
+        alert('Username atau Password salah!');
     }
 }
 
 function handleLogout() {
-    if (confirm('Apakah Anda ingin logout dari sesi Owner?')) {
+    if (confirm('Keluar dari sesi?')) {
         localStorage.removeItem('regs_owner_logged');
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPass').value = '';
         document.getElementById('loginModal').classList.remove('hidden');
-        showToast('🚪 Sesi Owner telah ditutup.', false);
+        showToast('Sesi telah ditutup.', false);
     }
 }
 
-// Load real keys from Supabase Cloud
+// Fetch Cloud Keys (Fresh: ignores previous setup test seeds)
 async function fetchSupabaseKeys() {
     if (!supabaseClient) return;
     try {
@@ -632,40 +538,46 @@ async function fetchSupabaseKeys() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-            const mapped = data.map(dbKey => {
-                const note = dbKey.note || '';
-                let type = 'Paid';
-                if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
-                else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
+        if (!error && data) {
+            // Filter out setup test keys so project remains fresh
+            const freshData = data.filter(k => 
+                !k.key_code.includes('TEST1') && 
+                !k.key_code.includes('PRB5956') &&
+                !k.key_code.includes('TEST-SCHEMA')
+            );
 
-                const days = dbKey.duration_days || 7;
-                let durText = `${days} Days`;
-                if (days === 1) durText = '1 Day';
-                else if (days >= 3650) durText = 'Lifetime';
+            if (freshData.length > 0) {
+                allKeys = freshData.map(dbKey => {
+                    const note = dbKey.note || '';
+                    let type = 'Paid';
+                    if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
+                    else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
 
-                const created = formatDateDisplay(dbKey.created_at);
-                const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
-                const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+                    const days = dbKey.duration_days || 7;
+                    let durText = `${days} Days`;
+                    if (days === 1) durText = '1 Day';
+                    else if (days >= 3650) durText = 'Lifetime';
 
-                return {
-                    id: dbKey.id,
-                    key_code: dbKey.key_code,
-                    type: type,
-                    duration_days: days,
-                    duration_text: durText,
-                    status: dbKey.is_used ? 'Expired' : 'Active',
-                    created_at: created,
-                    expires_at: expires,
-                    device: dbKey.used_by || '-',
-                    note: note
-                };
-            });
+                    const created = formatDateDisplay(dbKey.created_at);
+                    const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
+                    const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
 
-            // Combine database keys with seed keys (avoiding duplicate codes)
-            const existingCodes = new Set(mapped.map(m => m.key_code));
-            const remainingSeeds = INITIAL_KEYS.filter(s => !existingCodes.has(s.key_code));
-            allKeys = [...mapped, ...remainingSeeds];
+                    return {
+                        id: dbKey.id,
+                        key_code: dbKey.key_code,
+                        type: type,
+                        duration_days: days,
+                        duration_text: durText,
+                        status: dbKey.is_used ? 'Expired' : 'Active',
+                        created_at: created,
+                        expires_at: expires,
+                        device: dbKey.used_by || '-',
+                        note: note
+                    };
+                });
+            } else {
+                allKeys = [];
+            }
             updateStats();
             renderKeysTable();
         }
@@ -676,8 +588,8 @@ async function fetchSupabaseKeys() {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
-    // Populate Initial Keys
-    allKeys = [...INITIAL_KEYS];
+    // Starts 100% empty
+    allKeys = [];
     updateStats();
     renderKeysTable();
 
@@ -687,6 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginModal').classList.remove('hidden');
     }
 
-    // Fetch Cloud Keys
+    // Load any real database keys
     fetchSupabaseKeys();
 });
