@@ -246,13 +246,14 @@ object AuthManager {
                     }
 
                     // Cek masa aktif jika sudah pernah diaktifkan
-                    if (isUsed && usedAt.isNotEmpty()) {
+                    // PENTING: Lifetime (duration >= 3650) TIDAK PERNAH EXPIRED!
+                    if (duration < 3650 && isUsed && usedAt.isNotEmpty()) {
                         try {
                             val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
                             sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
                             val cleanDateStr = usedAt.substringBefore(".")
                             val activatedTime = sdf.parse(cleanDateStr)?.time ?: 0L
-                            val maxDurationMs = if (duration >= 3650) 36500L * 86400000L else duration.toLong() * 86400000L
+                            val maxDurationMs = duration.toLong() * 86400000L
                             if (activatedTime > 0 && System.currentTimeMillis() > activatedTime + maxDurationMs) {
                                 return@withContext false to "Kode lisensi telah kadaluarsa (Expired). Masa aktif $expiryText telah habis."
                             }

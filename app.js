@@ -105,6 +105,77 @@ function saveLocalCache() {
     } catch (e) {}
 }
 
+// Official Package Pricing Matrix (Owner Specification)
+const PACKAGE_PRICES = {
+    1: 25000,
+    3: 40000,
+    7: 65000,
+    15: 100000,
+    30: 180000,
+    36500: 450000
+};
+
+// Calculate Single Key Price
+// Owner & Free keys are ALWAYS Rp 0 (Gratis)
+function getKeyPrice(item) {
+    if (item.type === 'Owner' || item.type === 'Free') {
+        return 0;
+    }
+    const days = parseInt(item.duration_days, 10) || 1;
+    if (days >= 3650) {
+        return 450000;
+    }
+    if (PACKAGE_PRICES[days]) {
+        return PACKAGE_PRICES[days];
+    }
+    return days * 25000;
+}
+
+// Calculate Total Real Revenue (Only Paid Keys)
+function calculateTotalRevenue() {
+    return allKeys
+        .filter(k => k.type === 'Paid')
+        .reduce((sum, k) => sum + getKeyPrice(k), 0);
+}
+
+// True Key Status Determination
+// PREVENTS PREMATURE EXPIRATION:
+// - Lifetime keys NEVER expire
+// - Fresh keys that haven't been used yet are Active
+// - Activated keys only expire if real elapsed time exceeds duration
+function getKeyStatus(dbKey) {
+    const note = dbKey.note || '';
+    if (note.includes('[REVOKED]') || note.includes('[DELETED]')) return 'Revoked';
+    if (note.includes('[PAUSED]')) return 'Paused';
+
+    const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
+
+    // LIFETIME KEYS NEVER EXPIRE!
+    if (days >= 3650) return 'Active';
+
+    // Fresh unactivated keys are Active
+    if (!dbKey.is_used && !dbKey.used_at) return 'Active';
+
+    // Activated keys: Check if actual duration has passed
+    const baseTime = dbKey.used_at ? new Date(dbKey.used_at).getTime() : new Date(dbKey.created_at || Date.now()).getTime();
+    if (isNaN(baseTime)) return 'Active';
+
+    const expireTime = baseTime + (days * 86400000);
+    return Date.now() > expireTime ? 'Expired' : 'Active';
+}
+
+// Format Expiration Date Display
+function getKeyExpiresDisplay(dbKey) {
+    const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
+    if (days >= 3650) return 'Lifetime (Permanen)';
+
+    const baseTime = dbKey.used_at ? new Date(dbKey.used_at).getTime() : new Date(dbKey.created_at || Date.now()).getTime();
+    if (isNaN(baseTime)) return '-';
+
+    const expDate = new Date(baseTime + (days * 86400000));
+    return formatDateDisplay(expDate);
+}
+
 // Calculate & Update Stat Counters
 function updateStats() {
     const total = allKeys.length;
@@ -120,13 +191,14 @@ function updateStats() {
     document.getElementById('statExpired').textContent = expired;
     document.getElementById('tableHeading').textContent = `ALL KEYS (${total})`;
 
-    // Revenue Update
+    // Revenue Update (Real calculation based on user's exact price list)
     const revPaid = document.getElementById('revPaidCount');
     if (revPaid) revPaid.textContent = paid;
+    
+    const totalOmset = calculateTotalRevenue();
     const revTotal = document.getElementById('revTotalRp');
     if (revTotal) {
-        const estRp = paid * 145000;
-        revTotal.textContent = `Rp ${estRp.toLocaleString('id-ID')}`;
+        revTotal.textContent = `Rp ${totalOmset.toLocaleString('id-ID')}`;
     }
     const revRate = document.getElementById('revRate');
     if (revRate) {
@@ -134,8 +206,87 @@ function updateStats() {
         revRate.textContent = `${rate}%`;
     }
 
+    // Revenue Breakdown Details
+    updateRevenueBreakdown();
+
     // Analytics Breakdown Update
     updateAnalytics();
+}
+
+// Update Revenue Package Breakdown Table
+function updateRevenueBreakdown() {
+    const getPaidCount = (d) => allKeys.filter(k => k.type === 'Paid' && k.duration_days === d).length;
+    const getPaidLifeCount = () => allKeys.filter(k => k.type === 'Paid' && k.duration_days >= 3650).length;
+
+    const count1D = getPaidCount(1);
+    const count3D = getPaidCount(3);
+    const count7D = getPaidCount(7);
+    const count15D = getPaidCount(15);
+    const count30D = getPaidCount(30);
+    const countLife = getPaidLifeCount();
+
+    const sub1D = count1D * 25000;
+    const sub3D = count3D * 40000;
+    const sub7D = count7D * 65000;
+    const sub15D = count15D * 100000;
+    const sub30D = count30D * 180000;
+    const subLife = countLife * 450000;
+
+    const setEl = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+
+    setEl('revCount1D', `${count1D} Keys`);
+    setEl('revSub1D', `Rp ${sub1D.toLocaleString('id-ID')}`);
+    setEl('revCount3D', `${count3D} Keys`);
+    setEl('revSub3D', `Rp ${sub3D.toLocaleString('id-ID')}`);
+    setEl('revCount7D', `${count7D} Keys`);
+    setEl('revSub7D', `Rp ${sub7D.toLocaleString('id-ID')}`);
+    setEl('revCount15D', `${count15D} Keys`);
+    setEl('revSub15D', `Rp ${sub15D.toLocaleString('id-ID')}`);
+    setEl('revCount30D', `${count30D} Keys`);
+    setEl('revSub30D', `Rp ${sub30D.toLocaleString('id-ID')}`);
+    setEl('revCountLife', `${countLife} Keys`);
+    setEl('revSubLife', `Rp ${subLife.toLocaleString('id-ID')}`);
+
+    const countOwner = allKeys.filter(k => k.type === 'Owner').length;
+    const countFree = allKeys.filter(k => k.type === 'Free').length;
+    setEl('revCountOwner', `${countOwner} Keys`);
+    setEl('revCountFree', `${countFree} Keys`);
+}
+
+// Live Price Indicator on Generate Form
+function updatePriceIndicator() {
+    const badge = document.getElementById('lblLivePrice');
+    if (!badge) return;
+
+    const typeRadios = document.getElementsByName('keyType');
+    let selectedType = 'Paid';
+    for (const r of typeRadios) {
+        if (r.checked) selectedType = r.value;
+    }
+
+    if (selectedType === 'Owner') {
+        badge.innerHTML = '<span style="color:#ef4444; font-weight:700;">Rp 0</span> <span style="color:#9ca3af;">(Gratis - Owner Master Key)</span>';
+        return;
+    }
+    if (selectedType === 'Free') {
+        badge.innerHTML = '<span style="color:#3b82f6; font-weight:700;">Rp 0</span> <span style="color:#9ca3af;">(Gratis - Free Trial Key)</span>';
+        return;
+    }
+
+    let days = 1;
+    if (currentDurationMode === 'preset') {
+        const selObj = document.getElementById('selDuration');
+        days = parseInt(selObj.value, 10) || 1;
+    } else if (currentDurationMode === 'custom') {
+        const val = parseInt(document.getElementById('inputCustomDays').value, 10);
+        days = isNaN(val) || val <= 0 ? 1 : val;
+    }
+
+    const price = getKeyPrice({ type: 'Paid', duration_days: days });
+    badge.innerHTML = `<span style="color:#10b981; font-weight:700;">Rp ${price.toLocaleString('id-ID')}</span> <span style="color:#9ca3af;">/ key (Paid)</span>`;
 }
 
 function updateAnalytics() {
@@ -250,8 +401,7 @@ async function handleGenerateKeys(e) {
 
     if (currentDurationMode === 'preset') {
         durationDays = parseInt(document.getElementById('selDuration').value, 10) || 1;
-        const selObj = document.getElementById('selDuration');
-        durationText = selObj.options[selObj.selectedIndex].text;
+        durationText = durationDays >= 3650 ? 'Lifetime' : (durationDays === 1 ? '1 Day' : `${durationDays} Days`);
     } else if (currentDurationMode === 'custom') {
         const val = parseInt(document.getElementById('inputCustomDays').value, 10);
         durationDays = isNaN(val) || val <= 0 ? 1 : val;
@@ -276,7 +426,7 @@ async function handleGenerateKeys(e) {
     const now = new Date();
     const nowStr = formatDateDisplay(now);
     const expDate = new Date(now.getTime() + (durationDays >= 3650 ? 36500 : durationDays) * 24 * 60 * 60 * 1000);
-    const expStr = durationDays >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+    const expStr = durationDays >= 3650 ? 'Lifetime (Permanen)' : formatDateDisplay(expDate);
 
     const generated = [];
     for (let i = 0; i < count; i++) {
@@ -336,11 +486,15 @@ async function handleGenerateKeys(e) {
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
 
-    showToast(`Berhasil membuat ${count} key lisensi (${keyType}, ${durationText})!`, true);
-    logActivity(`Membuat ${count} key baru (<b style="color:#10b981">${durationText}</b>, Tipe: ${keyType}).`);
+    const singlePrice = getKeyPrice({ type: keyType, duration_days: durationDays });
+    const priceText = singlePrice > 0 ? `Rp ${(singlePrice * count).toLocaleString('id-ID')}` : 'Gratis (Rp 0)';
 
-    // Reset optional note
+    showToast(`Berhasil membuat ${count} key (${keyType}, ${durationText} - ${priceText})!`, true);
+    logActivity(`Membuat ${count} key baru (<b style="color:#ef4444">${durationText}</b>, Tipe: <b>${keyType}</b>, Omset: <b>${priceText}</b>).`);
+
+    // Reset optional note & update price badge
     document.getElementById('inputNote').value = '';
+    updatePriceIndicator();
 }
 
 // Filter Selection
@@ -613,8 +767,8 @@ async function fetchSupabaseKeys() {
             else if (days >= 3650) durText = 'Lifetime';
 
             const created = formatDateDisplay(dbKey.created_at);
-            const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
-            const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+            const status = getKeyStatus(dbKey);
+            const expires = getKeyExpiresDisplay(dbKey);
 
             return {
                 id: dbKey.id,
@@ -622,10 +776,10 @@ async function fetchSupabaseKeys() {
                 type: type,
                 duration_days: days,
                 duration_text: durText,
-                status: dbKey.is_used ? 'Expired' : 'Active',
+                status: status,
                 created_at: created,
                 expires_at: expires,
-                device: dbKey.used_by || '-',
+                device: dbKey.used_by || (dbKey.is_used ? 'Device Aktif' : '-'),
                 note: note
             };
         });
@@ -664,6 +818,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginModal').classList.remove('hidden');
     }
 
-    // 3. Sync live keys with Supabase Cloud
+    // 3. Setup Price Indicator
+    updatePriceIndicator();
+    const selDur = document.getElementById('selDuration');
+    if (selDur) selDur.addEventListener('change', updatePriceIndicator);
+    const customInp = document.getElementById('inputCustomDays');
+    if (customInp) customInp.addEventListener('input', updatePriceIndicator);
+    document.getElementsByName('keyType').forEach(r => r.addEventListener('change', updatePriceIndicator));
+
+    // 4. Sync live keys with Supabase Cloud
     fetchSupabaseKeys();
 });

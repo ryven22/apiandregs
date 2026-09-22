@@ -58,13 +58,26 @@ export default async function handler(req, res) {
                 } else if (duration === 1) {
                     expiryText = '1 Hari';
                     role = 'VIP 1 DAY';
+                } else if (duration === 3) {
+                    expiryText = '3 Hari';
+                    role = 'VIP 3 DAY';
+                } else if (duration === 7) {
+                    expiryText = '7 Hari';
+                    role = 'VIP 7 DAY';
+                } else if (duration === 15) {
+                    expiryText = '15 Hari';
+                    role = 'VIP 15 DAY';
+                } else if (duration === 30) {
+                    expiryText = '30 Hari';
+                    role = 'VIP 30 DAY';
                 }
 
                 // Cek masa aktif jika key sudah pernah diaktifkan sebelumnya
-                if (keyData.is_used && keyData.used_at) {
-                    const activatedAt = new Date(keyData.used_at).getTime();
-                    const expireTimestamp = activatedAt + (duration >= 3650 ? 36500 : duration) * 86400000;
-                    if (Date.now() > expireTimestamp) {
+                // PENTING: Lifetime (duration >= 3650) TIDAK PERNAH EXPIRED!
+                if (duration < 3650 && keyData.is_used) {
+                    const baseTime = keyData.used_at ? new Date(keyData.used_at).getTime() : new Date(keyData.created_at).getTime();
+                    const expireTimestamp = baseTime + (duration * 86400000);
+                    if (!isNaN(expireTimestamp) && Date.now() > expireTimestamp) {
                         return res.status(410).json({
                             success: false,
                             message: `Kode lisensi telah kadaluarsa (Expired). Masa aktif ${expiryText} telah habis.`

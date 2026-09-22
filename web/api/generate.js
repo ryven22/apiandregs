@@ -80,11 +80,16 @@ export default async function handler(req, res) {
         }
     }
 
+    const pricePerKey = (keyType === 'Owner' || keyType === 'Free') ? 0 :
+        (durationDays >= 3650 ? 450000 : ({ 1: 25000, 3: 40000, 7: 65000, 15: 100000, 30: 180000 }[durationDays] || durationDays * 25000));
+
     return res.status(200).json({
         success: true,
         message: `Berhasil membuat ${newKeys.length} key lisensi (${keyType}).`,
         duration_days: durationDays,
         type: keyType,
+        price_per_key: pricePerKey,
+        total_revenue: pricePerKey * newKeys.length,
         keys: newKeys.map(k => k.key_code),
         data: newKeys
     });
