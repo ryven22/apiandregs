@@ -36,6 +36,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -57,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -1022,129 +1024,432 @@ fun LicenseLoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
     var inputKey by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    val whatsappChannelUrl = "https://www.whatsapp.com/channel/0029Vb800WiJkK74Ssu8Fx0i"
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BlackBackground)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF160508),
+                        Color(0xFF0C0D13),
+                        Color(0xFF070709)
+                    )
+                )
+            )
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(BlackSurfaceVariant, shape = RoundedCornerShape(16.dp))
-                .border(1.dp, Color(0xFF262A36), shape = RoundedCornerShape(16.dp))
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_cena),
-                contentDescription = "Logo",
+            // Dev Watermark Pill
+            Surface(
+                color = Color(0xFF141622),
+                shape = RoundedCornerShape(50),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E3348)),
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .background(Color(0xFF10B981), shape = RoundedCornerShape(50))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "</> REGS X CENA",
+                        color = Color(0xFFE2E8F0),
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+
+            // Glowing Logo Container
+            Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "CENA X REGS",
-                color = TextWhite,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 1.sp
-            )
-            Text(
-                text = "MASUK DENGAN LISENSI",
-                color = RedPrimary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (errorMessage.isNotEmpty()) {
-                Text(
-                    text = errorMessage,
-                    color = RedPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    .size(82.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                RedPrimary,
+                                Color(0xFF4A000E),
+                                Color(0xFF1A1C24)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        brush = Brush.linearGradient(
+                            listOf(
+                                Color(0xFFFF3366),
+                                RedPrimary,
+                                Color(0xFF262A38)
+                            )
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(3.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_cena),
+                    contentDescription = "Logo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(21.dp))
                 )
             }
 
-            androidx.compose.material3.OutlinedTextField(
-                value = inputKey,
-                onValueChange = { 
-                    inputKey = it.uppercase()
-                    errorMessage = "" 
-                },
-                label = { Text("Kode Lisensi / Key") },
-                placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
-                singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    color = TextWhite,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                ),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = RedPrimary,
-                    unfocusedBorderColor = Color(0xFF353945),
-                    focusedLabelColor = RedPrimary,
-                    unfocusedLabelColor = TextGrey,
-                    cursorColor = RedPrimary
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Spacer(modifier = Modifier.height(6.dp))
+            // Title & Subtitle
             Text(
-                text = "Contoh: M59F-74RF-71UE-MCFM",
-                color = TextGrey,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.align(Alignment.Start)
+                text = "CENA X REGS",
+                color = TextWhite,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.5.sp
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = {
-                    val trimmedKey = inputKey.trim()
-                    if (trimmedKey.isEmpty()) {
-                        errorMessage = "Masukkan kode lisensi terlebih dahulu."
-                        return@Button
-                    }
-                    busy = true
-                    errorMessage = ""
-                    scope.launch {
-                        val (success, msg) = AuthManager.loginWithKey(context, trimmedKey)
-                        busy = false
-                        if (success) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = msg
-                        }
-                    }
-                },
-                enabled = !busy,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = RedPrimary,
-                    disabledContainerColor = RedPrimary.copy(alpha = 0.5f)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 4.dp)
             ) {
                 Text(
-                    text = if (busy) "MEMVERIFIKASI LISENSI..." else "AKTIFKAN & MASUK",
-                    color = Color.White,
+                    text = "EXTERNAL VIP INJECTOR",
+                    color = RedPrimary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Main Input Card
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF14151E),
+                                Color(0xFF0F1017)
+                            )
+                        )
+                    )
+                    .border(1.dp, Color(0xFF25293A), RoundedCornerShape(20.dp))
+                    .padding(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "AKTIVASI LISENSI",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+
+                    Surface(
+                        color = RedPrimary.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = "SECURE",
+                            color = RedPrimary,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Error Banner
+                if (errorMessage.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 14.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF2A0F12))
+                            .border(1.dp, Color(0xFFE50914).copy(alpha = 0.6f), RoundedCornerShape(10.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = Color(0xFFFF6B6B),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+
+                // Input Key Field with PASTE Button
+                androidx.compose.material3.OutlinedTextField(
+                    value = inputKey,
+                    onValueChange = {
+                        inputKey = it.uppercase()
+                        errorMessage = ""
+                    },
+                    label = { Text("Kode Lisensi / License Key") },
+                    placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = TextWhite,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    ),
+                    trailingIcon = {
+                        Surface(
+                            color = Color(0xFF212433),
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF383D54)),
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clickable {
+                                    val clip = clipboardManager.getText()?.text
+                                    if (!clip.isNullOrBlank()) {
+                                        inputKey = clip.trim().uppercase()
+                                        errorMessage = ""
+                                    }
+                                }
+                        ) {
+                            Text(
+                                text = "TEMPEL",
+                                color = Color(0xFF60A5FA),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    },
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPrimary,
+                        unfocusedBorderColor = Color(0xFF2B3042),
+                        focusedLabelColor = RedPrimary,
+                        unfocusedLabelColor = TextGrey,
+                        cursorColor = RedPrimary,
+                        focusedContainerColor = Color(0xFF0B0C10),
+                        unfocusedContainerColor = Color(0xFF0B0C10)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Format: XXXX-XXXX-XXXX-XXXX",
+                    color = Color(0xFF64748B),
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Submit Button
+                Button(
+                    onClick = {
+                        val trimmedKey = inputKey.trim()
+                        if (trimmedKey.isEmpty()) {
+                            errorMessage = "Silakan masukkan atau tempel kode lisensi Anda."
+                            return@Button
+                        }
+                        busy = true
+                        errorMessage = ""
+                        scope.launch {
+                            val (success, msg) = AuthManager.loginWithKey(context, trimmedKey)
+                            busy = false
+                            if (success) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = msg
+                            }
+                        }
+                    },
+                    enabled = !busy,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RedPrimary,
+                        disabledContainerColor = RedPrimary.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                ) {
+                    if (busy) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "MEMVERIFIKASI LISENSI...",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    } else {
+                        Text(
+                            text = "AKTIFKAN & MASUK",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.2.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // BUY KEY WHATSAPP CHANNEL CARD (Dedicated Feature)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                Color(0xFF0D1D16),
+                                Color(0xFF09140F)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        brush = Brush.linearGradient(
+                            listOf(
+                                Color(0xFF25D366),
+                                Color(0xFF128C7E),
+                                Color(0xFF1A2F25)
+                            )
+                        ),
+                        shape = RoundedCornerShape(18.dp)
+                    )
+                    .clickable {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(whatsappChannelUrl))
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = Color(0xFF25D366),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = "WHATSAPP CHANNEL",
+                                    color = Color.Black,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "BUY KEY",
+                                color = Color(0xFF25D366),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "BELUM PUNYA LISENSI? BUY DISINI",
+                            color = TextWhite,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.5.sp
+                        )
+
+                        Text(
+                            text = "Gabung ke Saluran WhatsApp </> REGS X CENA",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Surface(
+                        color = Color(0xFF25D366),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "GABUNG >",
+                            color = Color.Black,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Web Portal Link
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SupabaseConfig.WEB_PORTAL_URL))
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Buka Web Portal Lisensi",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "↗",
+                    color = RedPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1152,17 +1457,20 @@ fun LicenseLoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Footer Dev Credit
             Text(
-                text = "Belum punya lisensi? Buka Web Portal",
-                color = RedPrimary,
-                fontSize = 12.sp,
+                text = "DEVELOPER: </> REGS X CENA",
+                color = Color(0xFF475569),
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SupabaseConfig.WEB_PORTAL_URL))
-                        context.startActivity(intent)
-                    } catch (_: Exception) {}
-                }
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = "EXTERNAL ANDROID VIP • v1.0",
+                color = Color(0xFF334155),
+                fontSize = 9.sp,
+                letterSpacing = 1.5.sp
             )
         }
     }

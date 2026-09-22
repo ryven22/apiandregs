@@ -899,6 +899,140 @@ body {
     background: var(--red-hover);
 }
 
+.dev-badge-pill {
+    display: inline-block;
+    background: #141622;
+    border: 1px solid #2e3348;
+    color: #10b981;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.modal-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 18px 0 14px 0;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #262838;
+}
+
+.modal-divider span {
+    padding: 0 10px;
+}
+
+.btn-wa-modal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #0d1e15, #08140e);
+    border: 1.5px solid #25d366;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    gap: 10px;
+}
+
+.btn-wa-modal:hover {
+    background: linear-gradient(135deg, #132b1e, #0c1c14);
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
+    transform: translateY(-1px);
+}
+
+.wa-icon-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #25d366;
+    box-shadow: 0 0 8px #25d366;
+    flex-shrink: 0;
+}
+
+.wa-text-col {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    flex: 1;
+}
+
+.wa-main-text {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.wa-sub-text {
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.wa-arrow {
+    color: #25d366;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+/* Sidebar WhatsApp Card */
+.sidebar-wa-card {
+    display: block;
+    background: linear-gradient(135deg, #0f2017, #08130e);
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    border-radius: 10px;
+    padding: 12px;
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-wa-card:hover {
+    border-color: #25d366;
+    background: linear-gradient(135deg, #142a1f, #0c1a13);
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.2);
+}
+
+.wa-card-badge {
+    display: inline-block;
+    background: #25d366;
+    color: #000000;
+    font-size: 8.5px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.wa-card-title {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.wa-card-dev {
+    color: #94a3b8;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+}
+
 /* ---------------- Toast Notifications ---------------- */
 .toast-container {
     position: fixed;
