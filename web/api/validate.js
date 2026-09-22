@@ -1,5 +1,5 @@
 // Vercel Serverless Function: POST/GET /api/validate
-// Memvalidasi key lisensi (format random XXXX-XXXX-XXXX-XXXX maupun format REGSXD-*)
+// STRICT VALIDATION: Hanya key yang benar-benar TERDAFTAR di Supabase Cloud yang diizinkan!
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     if (!cleanKey) {
         return res.status(400).json({
             success: false,
-            message: 'Parameter "key" wajib disertakan. Contoh: { "key": "0VAW-LPE4-XSHQ-QUHJ" }'
+            message: 'Parameter "key" wajib disertakan.'
         });
     }
 
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
                         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZ2hyeG55YXZraXR0eWdvam5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzE4MTIsImV4cCI6MjEwNDc0NzgxMn0.Vr1usXkl6jHzKujpEi8SxWPA2qV8mNrW5g6imXj-tso';
 
     try {
-        // Query key ke Supabase REST
+        // Query key strictly ke Supabase REST
         const queryUrl = `${supabaseUrl}/rest/v1/license_keys?key_code=eq.${encodeURIComponent(cleanKey)}&select=*`;
         const fetchRes = await fetch(queryUrl, {
             headers: {
@@ -39,43 +39,62 @@ export default async function handler(req, res) {
             const rows = await fetchRes.json();
             if (rows && rows.length > 0) {
                 const keyData = rows[0];
-                if (keyData.is_used) {
-                    return res.status(409).json({
+
+                // Cek jika key di-revoke
+                if (keyData.note && keyData.note.includes('[REVOKED]')) {
+                    return res.status(403).json({
                         success: false,
-                        message: 'Key lisensi ini sudah pernah digunakan atau kadaluarsa.'
+                        message: 'Kode lisensi ini telah dinonaktifkan (Revoked) oleh Owner.'
                     });
                 }
 
-                const duration = keyData.duration_days || 7;
-                let expiry = `${duration} Hari`;
+                const duration = (keyData.duration_days !== null && keyData.duration_days !== undefined) ? parseInt(keyData.duration_days, 10) : 1;
+                let expiryText = `${duration} Hari`;
                 let role = `VIP ${duration} DAY`;
 
                 if (duration >= 3650) {
-                    expiry = 'LIFETIME (Permanen)';
+                    expiryText = 'LIFETIME (Permanen)';
                     role = 'VIP LIFETIME';
+                } else if (duration === 1) {
+                    expiryText = '1 Hari';
+                    role = 'VIP 1 DAY';
                 }
 
-                // Tandai key sebagai terpakai
-                await fetch(`${supabaseUrl}/rest/v1/license_keys?id=eq.${keyData.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        is_used: true,
-                        used_at: new Date().toISOString()
-                    })
-                });
+                // Cek masa aktif jika key sudah pernah diaktifkan sebelumnya
+                if (keyData.is_used && keyData.used_at) {
+                    const activatedAt = new Date(keyData.used_at).getTime();
+                    const expireTimestamp = activatedAt + (duration >= 3650 ? 36500 : duration) * 86400000;
+                    if (Date.now() > expireTimestamp) {
+                        return res.status(410).json({
+                            success: false,
+                            message: `Kode lisensi telah kadaluarsa (Expired). Masa aktif ${expiryText} telah habis.`
+                        });
+                    }
+                }
+
+                // Jika pertama kali dipakai, tandai is_used = true dan used_at
+                if (!keyData.is_used) {
+                    await fetch(`${supabaseUrl}/rest/v1/license_keys?id=eq.${keyData.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            is_used: true,
+                            used_at: new Date().toISOString()
+                        })
+                    }).catch(() => {});
+                }
 
                 return res.status(200).json({
                     success: true,
-                    message: `Key Berhasil Diaktifkan (${expiry})!`,
+                    message: `Lisensi Resmi Aktif (${expiryText})!`,
                     key: cleanKey,
                     duration_days: duration,
                     role: role,
-                    expiry: expiry,
+                    expiry: expiryText,
                     note: keyData.note || '',
                     verified_by: 'supabase_cloud'
                 });
@@ -85,42 +104,9 @@ export default async function handler(req, res) {
         console.error('Error querying Supabase:', err);
     }
 
-    // Fallback: jika key cocok dengan pattern random 4x4 (misal XXXX-XXXX-XXXX-XXXX) atau legacy
-    const isRandom4x4 = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanKey);
-    const isLegacy = cleanKey.startsWith('REGSXD');
-
-    if (isRandom4x4 || isLegacy) {
-        let duration = 1;
-        let role = 'VIP 1 DAY';
-        let expiry = '1 Hari';
-
-        if (cleanKey.includes('1D') || cleanKey.includes('-1-')) {
-            duration = 1; role = 'VIP 1 DAY'; expiry = '1 Hari';
-        } else if (cleanKey.includes('3D') || cleanKey.includes('-3-')) {
-            duration = 3; role = 'VIP 3 DAY'; expiry = '3 Hari';
-        } else if (cleanKey.includes('7D') || cleanKey.includes('-7-')) {
-            duration = 7; role = 'VIP 7 DAY'; expiry = '7 Hari';
-        } else if (cleanKey.includes('15D') || cleanKey.includes('-15-')) {
-            duration = 15; role = 'VIP 15 DAY'; expiry = '15 Hari';
-        } else if (cleanKey.includes('30D') || cleanKey.includes('-30-')) {
-            duration = 30; role = 'VIP 30 DAY'; expiry = '30 Hari';
-        } else if (cleanKey.includes('LIFE')) {
-            duration = 36500; role = 'VIP LIFETIME'; expiry = 'LIFETIME (Permanen)';
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: `Key Valid! Paket ${expiry} aktif.`,
-            key: cleanKey,
-            duration_days: duration,
-            role: role,
-            expiry: expiry,
-            mode: 'verified_active'
-        });
-    }
-
+    // STRICT: Jika key TIDAK ADA di database Supabase, WAJIB DITOLAK!
     return res.status(404).json({
         success: false,
-        message: 'Kode lisensi tidak valid atau tidak terdaftar. Format: XXXX-XXXX-XXXX-XXXX'
+        message: 'Kode lisensi tidak terdaftar di database. Silakan buat atau beli key resmi di Web Portal.'
     });
 }

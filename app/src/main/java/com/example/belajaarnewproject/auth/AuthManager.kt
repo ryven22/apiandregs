@@ -154,8 +154,13 @@ object AuthManager {
         if (cleanKey.isEmpty()) return@withContext false to "Masukkan kode lisensi / key."
 
         val isFormattedKey = cleanKey.matches(Regex("^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")) || cleanKey.startsWith("REGSXD")
+        if (!isFormattedKey) {
+            return@withContext false to "Format key tidak valid. Contoh: XXXX-XXXX-XXXX-XXXX"
+        }
 
-        // 1. Coba verifikasi via Vercel Web API Resmi
+        var lastErrorMessage = ""
+
+        // 1. Verifikasi via Vercel Web API Resmi
         try {
             val apiEndpoint = "${SupabaseConfig.WEB_PORTAL_URL.trimEnd('/')}/api/validate"
             val url = URL(apiEndpoint)
@@ -187,12 +192,22 @@ object AuthManager {
                     saveSession(context, session)
                     return@withContext true to resObj.optString("message", "Lisensi Berhasil Diaktifkan ($expiryText)!")
                 }
+            } else {
+                val errStream = conn.errorStream
+                if (errStream != null) {
+                    val errRes = errStream.bufferedReader().use(BufferedReader::readText)
+                    val errObj = JSONObject(errRes)
+                    val msg = errObj.optString("message", "")
+                    if (msg.isNotEmpty()) {
+                        lastErrorMessage = msg
+                    }
+                }
             }
         } catch (_: Exception) {
             // Lanjut ke query Supabase langsung jika API Vercel tidak merespons
         }
 
-        // 2. Coba verifikasi langsung ke Database Supabase Cloud
+        // 2. Verifikasi cadangan langsung ke Database Supabase Cloud
         try {
             val endpoint = "${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey"
             val url = URL(endpoint)
@@ -209,7 +224,16 @@ object AuthManager {
                 val arr = JSONArray(res)
                 if (arr.length() > 0) {
                     val keyObj = arr.getJSONObject(0)
-                    val duration = keyObj.optInt("duration_days", 30)
+
+                    // Cek jika key dinonaktifkan (Revoked)
+                    val note = keyObj.optString("note", "")
+                    if (note.contains("[REVOKED]")) {
+                        return@withContext false to "Kode lisensi ini telah dinonaktifkan (Revoked) oleh Owner."
+                    }
+
+                    val duration = keyObj.optInt("duration_days", 1)
+                    val isUsed = keyObj.optBoolean("is_used", false)
+                    val usedAt = keyObj.optString("used_at", "")
 
                     val (expiryText, roleText) = when {
                         duration >= 3650 -> "LIFETIME (Permanen)" to "VIP LIFETIME"
@@ -221,18 +245,42 @@ object AuthManager {
                         else -> "$duration Hari" to "VIP ($duration Hari)"
                     }
 
-                    // Tandai key sebagai terpakai di Supabase
-                    try {
-                        val patchConn = URL("${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey").openConnection() as HttpURLConnection
-                        patchConn.requestMethod = "POST"
-                        patchConn.setRequestProperty("X-HTTP-Method-Override", "PATCH")
-                        patchConn.setRequestProperty("Content-Type", "application/json")
-                        patchConn.setRequestProperty("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
-                        patchConn.setRequestProperty("Authorization", "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
-                        patchConn.doOutput = true
-                        patchConn.outputStream.bufferedWriter().use { it.write(JSONObject().apply { put("is_used", true) }.toString()) }
-                        patchConn.responseCode
-                    } catch (_: Exception) {}
+                    // Cek masa aktif jika sudah pernah diaktifkan
+                    if (isUsed && usedAt.isNotEmpty()) {
+                        try {
+                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+                            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                            val cleanDateStr = usedAt.substringBefore(".")
+                            val activatedTime = sdf.parse(cleanDateStr)?.time ?: 0L
+                            val maxDurationMs = if (duration >= 3650) 36500L * 86400000L else duration.toLong() * 86400000L
+                            if (activatedTime > 0 && System.currentTimeMillis() > activatedTime + maxDurationMs) {
+                                return@withContext false to "Kode lisensi telah kadaluarsa (Expired). Masa aktif $expiryText telah habis."
+                            }
+                        } catch (_: Exception) {}
+                    }
+
+                    // Tandai key sebagai terpakai di Supabase jika baru pertama kali
+                    if (!isUsed) {
+                        try {
+                            val patchConn = URL("${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey").openConnection() as HttpURLConnection
+                            patchConn.requestMethod = "POST"
+                            patchConn.setRequestProperty("X-HTTP-Method-Override", "PATCH")
+                            patchConn.setRequestProperty("Content-Type", "application/json")
+                            patchConn.setRequestProperty("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
+                            patchConn.setRequestProperty("Authorization", "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
+                            patchConn.doOutput = true
+                            patchConn.outputStream.bufferedWriter().use {
+                                val nowIso = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+                                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                }.format(java.util.Date())
+                                it.write(JSONObject().apply {
+                                    put("is_used", true)
+                                    put("used_at", nowIso)
+                                }.toString())
+                            }
+                            patchConn.responseCode
+                        } catch (_: Exception) {}
+                    }
 
                     val session = UserSession(
                         isLoggedIn = true,
@@ -244,36 +292,19 @@ object AuthManager {
                     )
                     saveSession(context, session)
                     return@withContext true to "Lisensi Valid ($expiryText)! Selamat datang."
+                } else {
+                    // Key TIDAK ADA di database Supabase
+                    return@withContext false to "Kode lisensi tidak terdaftar di database. Silakan buat atau beli key resmi di Web Portal."
                 }
             }
         } catch (_: Exception) {
-            // Lanjut ke fallback offline jika koneksi database sedang offline
+            // Lanjut ke pesan error akhir
         }
 
-        // 3. Fallback Cerdas: Jika key berformat random 4x4 (contoh: M59F-74RF-71UE-MCFM)
-        if (isFormattedKey) {
-            val (durationDays, expiryText, roleText) = when {
-                cleanKey.contains("1D") || cleanKey.contains("-1-") -> Triple(1, "1 Hari", "VIP 1 DAY")
-                cleanKey.contains("3D") || cleanKey.contains("-3-") -> Triple(3, "3 Hari", "VIP 3 DAY")
-                cleanKey.contains("7D") || cleanKey.contains("-7-") -> Triple(7, "7 Hari", "VIP 7 DAY")
-                cleanKey.contains("15D") || cleanKey.contains("-15-") -> Triple(15, "15 Hari", "VIP 15 DAY")
-                cleanKey.contains("30D") || cleanKey.contains("-30-") -> Triple(30, "30 Hari", "VIP 30 DAY")
-                cleanKey.contains("LIFE") -> Triple(36500, "LIFETIME (Permanen)", "VIP LIFETIME")
-                else -> Triple(30, "30 Hari", "VIP 30 DAY")
-            }
-
-            val session = UserSession(
-                isLoggedIn = true,
-                username = cleanKey.take(14),
-                email = "license@regsxd.com",
-                role = roleText,
-                expiry = expiryText,
-                token = cleanKey
-            )
-            saveSession(context, session)
-            return@withContext true to "Lisensi Aktif ($expiryText)!"
+        if (lastErrorMessage.isNotEmpty()) {
+            return@withContext false to lastErrorMessage
         }
 
-        return@withContext false to "Format key tidak valid. Contoh: XXXX-XXXX-XXXX-XXXX"
+        return@withContext false to "Kode lisensi tidak terdaftar di database. Silakan buat atau beli key resmi di Web Portal."
     }
 }
