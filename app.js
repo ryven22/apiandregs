@@ -240,16 +240,16 @@ async function handleGenerateKeys(e) {
     submitBtn.disabled = true;
     submitBtn.style.opacity = '0.7';
 
-    let durationDays = 7;
-    let durationText = '7 Days';
+    let durationDays = 1;
+    let durationText = '1 Day';
 
     if (currentDurationMode === 'preset') {
-        durationDays = parseInt(document.getElementById('selDuration').value, 10);
+        durationDays = parseInt(document.getElementById('selDuration').value, 10) || 1;
         const selObj = document.getElementById('selDuration');
         durationText = selObj.options[selObj.selectedIndex].text;
     } else if (currentDurationMode === 'custom') {
         const val = parseInt(document.getElementById('inputCustomDays').value, 10);
-        durationDays = isNaN(val) || val <= 0 ? 7 : val;
+        durationDays = isNaN(val) || val <= 0 ? 1 : val;
         durationText = `${durationDays} Days`;
     } else if (currentDurationMode === 'date') {
         const pickDateVal = document.getElementById('inputPickDate').value;
@@ -292,7 +292,7 @@ async function handleGenerateKeys(e) {
         allKeys.unshift(newObj);
     }
 
-    // Save to Supabase Cloud Database if connected
+    // Save to Supabase Cloud Database
     if (supabaseClient) {
         try {
             await supabaseClient.from('license_keys').insert(
@@ -307,18 +307,6 @@ async function handleGenerateKeys(e) {
             console.error('Supabase key insert error:', err);
         }
     }
-
-    // Call Vercel API asynchronously
-    fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            duration: durationDays,
-            count: count,
-            type: keyType,
-            note: note
-        })
-    }).catch(err => console.log('API sync:', err));
 
     updateStats();
     renderKeysTable();
@@ -553,7 +541,7 @@ async function fetchSupabaseKeys() {
                     if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
                     else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
 
-                    const days = dbKey.duration_days || 7;
+                    const days = (dbKey.duration_days !== null && dbKey.duration_days !== undefined) ? parseInt(dbKey.duration_days, 10) : 1;
                     let durText = `${days} Days`;
                     if (days === 1) durText = '1 Day';
                     else if (days >= 3650) durText = 'Lifetime';

@@ -24,13 +24,13 @@ export default async function handler(req, res) {
     }
 
     const { 
-        duration = 7, 
+        duration = 1, 
         count = 1, 
         note = '', 
         type = 'Paid' 
     } = req.body || {};
 
-    const durationDays = parseInt(duration, 10) || 7;
+    const durationDays = parseInt(duration, 10) || 1;
     const numKeys = Math.min(Math.max(parseInt(count, 10) || 1, 1), 50);
     const keyType = (['Paid', 'Free', 'Owner'].includes(type)) ? type : 'Paid';
 

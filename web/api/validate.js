@@ -90,9 +90,9 @@ export default async function handler(req, res) {
     const isLegacy = cleanKey.startsWith('REGSXD');
 
     if (isRandom4x4 || isLegacy) {
-        let duration = 7;
-        let role = 'VIP 7 DAY';
-        let expiry = '7 Hari';
+        let duration = 1;
+        let role = 'VIP 1 DAY';
+        let expiry = '1 Hari';
 
         if (cleanKey.includes('1D') || cleanKey.includes('-1-')) {
             duration = 1; role = 'VIP 1 DAY'; expiry = '1 Hari';
