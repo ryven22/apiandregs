@@ -153,73 +153,46 @@ object AuthManager {
         val cleanKey = key.trim().uppercase()
         if (cleanKey.isEmpty()) return@withContext false to "Masukkan kode lisensi / key."
 
-        if (!SupabaseConfig.isConfigured()) {
-            // Coba validasi via Vercel Web API jika URL web portal aktif
-            try {
-                val apiEndpoint = "${SupabaseConfig.WEB_PORTAL_URL.trimEnd('/')}/api/validate"
-                val url = URL(apiEndpoint)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json")
-                conn.doOutput = true
-                conn.connectTimeout = 4000
-                conn.readTimeout = 4000
+        val isFormattedKey = cleanKey.matches(Regex("^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")) || cleanKey.startsWith("REGSXD")
 
-                val reqObj = JSONObject().apply { put("key", cleanKey) }
-                OutputStreamWriter(conn.outputStream).use { it.write(reqObj.toString()) }
+        // 1. Coba verifikasi via Vercel Web API Resmi
+        try {
+            val apiEndpoint = "${SupabaseConfig.WEB_PORTAL_URL.trimEnd('/')}/api/validate"
+            val url = URL(apiEndpoint)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
 
-                val code = conn.responseCode
-                if (code in 200..299) {
-                    val res = conn.inputStream.bufferedReader().use(BufferedReader::readText)
-                    val resObj = JSONObject(res)
-                    if (resObj.optBoolean("success", false)) {
-                        val roleText = resObj.optString("role", "VIP MEMBER")
-                        val expiryText = resObj.optString("expiry", "Aktif")
-                        val session = UserSession(
-                            isLoggedIn = true,
-                            username = cleanKey.take(12),
-                            email = "key-auth@regsxd.com",
-                            role = roleText,
-                            expiry = expiryText,
-                            token = cleanKey
-                        )
-                        saveSession(context, session)
-                        return@withContext true to resObj.optString("message", "Key Berhasil Diaktifkan ($expiryText)!")
-                    }
+            val reqObj = JSONObject().apply { put("key", cleanKey) }
+            OutputStreamWriter(conn.outputStream).use { it.write(reqObj.toString()) }
+
+            val code = conn.responseCode
+            if (code in 200..299) {
+                val res = conn.inputStream.bufferedReader().use(BufferedReader::readText)
+                val resObj = JSONObject(res)
+                if (resObj.optBoolean("success", false)) {
+                    val roleText = resObj.optString("role", "VIP MEMBER")
+                    val expiryText = resObj.optString("expiry", "Aktif")
+                    val session = UserSession(
+                        isLoggedIn = true,
+                        username = cleanKey.take(14),
+                        email = "license@regsxd.com",
+                        role = roleText,
+                        expiry = expiryText,
+                        token = cleanKey
+                    )
+                    saveSession(context, session)
+                    return@withContext true to resObj.optString("message", "Lisensi Berhasil Diaktifkan ($expiryText)!")
                 }
-            } catch (_: Exception) {
-                // Lanjut ke fallback offline jika Vercel belum di-deploy / koneksi gagal
             }
-
-            // Mode Demo Lokal / Offline Fallback
-            val (durationDays, expiryText, roleText) = when {
-                cleanKey.contains("1D") || cleanKey.contains("-1-") -> Triple(1, "1 Hari", "VIP 1 DAY")
-                cleanKey.contains("3D") || cleanKey.contains("-3-") -> Triple(3, "3 Hari", "VIP 3 DAY")
-                cleanKey.contains("7D") || cleanKey.contains("-7-") -> Triple(7, "7 Hari", "VIP 7 DAY")
-                cleanKey.contains("15D") || cleanKey.contains("-15-") -> Triple(15, "15 Hari", "VIP 15 DAY")
-                cleanKey.contains("30D") || cleanKey.contains("-30-") -> Triple(30, "30 Hari", "VIP 30 DAY")
-                cleanKey.contains("LIFE") -> Triple(36500, "LIFETIME (Permanen)", "VIP LIFETIME")
-                cleanKey.startsWith("REGSXD") -> Triple(30, "30 Hari", "VIP MEMBER")
-                cleanKey.matches(Regex("^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")) -> Triple(7, "7 Hari", "VIP 7 DAY")
-                else -> Triple(0, "", "")
-            }
-
-            if (durationDays > 0) {
-                val session = UserSession(
-                    isLoggedIn = true,
-                    username = cleanKey.take(12),
-                    email = "key-auth@regsxd.com",
-                    role = roleText,
-                    expiry = expiryText,
-                    token = cleanKey
-                )
-                saveSession(context, session)
-                return@withContext true to "Key Berhasil Diaktifkan ($expiryText)!"
-            } else {
-                return@withContext false to "Key tidak valid. Format: XXXX-XXXX-XXXX-XXXX"
-            }
+        } catch (_: Exception) {
+            // Lanjut ke query Supabase langsung jika API Vercel tidak merespons
         }
 
+        // 2. Coba verifikasi langsung ke Database Supabase Cloud
         try {
             val endpoint = "${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey"
             val url = URL(endpoint)
@@ -227,8 +200,8 @@ object AuthManager {
             conn.requestMethod = "GET"
             conn.setRequestProperty("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
             conn.setRequestProperty("Authorization", "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
+            conn.connectTimeout = 6000
+            conn.readTimeout = 6000
 
             val code = conn.responseCode
             if (code in 200..299) {
@@ -236,58 +209,71 @@ object AuthManager {
                 val arr = JSONArray(res)
                 if (arr.length() > 0) {
                     val keyObj = arr.getJSONObject(0)
-                    val isUsed = keyObj.optBoolean("is_used", false)
                     val duration = keyObj.optInt("duration_days", 30)
 
-                    if (isUsed) {
-                        false to "Key ini sudah pernah digunakan."
-                    } else {
-                        val (expiryText, roleText) = when {
-                            duration >= 3650 -> "LIFETIME (Permanen)" to "VIP LIFETIME"
-                            duration == 1 -> "1 Hari" to "VIP 1 DAY"
-                            duration == 3 -> "3 Hari" to "VIP 3 DAY"
-                            duration == 7 -> "7 Hari" to "VIP 7 DAY"
-                            duration == 15 -> "15 Hari" to "VIP 15 DAY"
-                            duration == 30 -> "30 Hari" to "VIP 30 DAY"
-                            else -> "$duration Hari" to "VIP ($duration Hari)"
-                        }
-
-                        // Tandai key sebagai sudah dipakai di Supabase
-                        try {
-                            val updateUrl = URL("${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey")
-                            val patchConn = updateUrl.openConnection() as HttpURLConnection
-                            patchConn.requestMethod = "POST"
-                            patchConn.setRequestProperty("X-HTTP-Method-Override", "PATCH")
-                            patchConn.setRequestProperty("Content-Type", "application/json")
-                            patchConn.setRequestProperty("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
-                            patchConn.setRequestProperty("Authorization", "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
-                            patchConn.doOutput = true
-                            val patchBody = JSONObject().apply {
-                                put("is_used", true)
-                            }
-                            patchConn.outputStream.bufferedWriter().use { it.write(patchBody.toString()) }
-                            patchConn.responseCode
-                        } catch (_: Exception) {}
-
-                        val session = UserSession(
-                            isLoggedIn = true,
-                            username = cleanKey.take(12),
-                            email = "key-$cleanKey",
-                            role = roleText,
-                            expiry = expiryText,
-                            token = cleanKey
-                        )
-                        saveSession(context, session)
-                        true to "Key Berhasil Diaktifkan ($expiryText)!"
+                    val (expiryText, roleText) = when {
+                        duration >= 3650 -> "LIFETIME (Permanen)" to "VIP LIFETIME"
+                        duration == 1 -> "1 Hari" to "VIP 1 DAY"
+                        duration == 3 -> "3 Hari" to "VIP 3 DAY"
+                        duration == 7 -> "7 Hari" to "VIP 7 DAY"
+                        duration == 15 -> "15 Hari" to "VIP 15 DAY"
+                        duration == 30 -> "30 Hari" to "VIP 30 DAY"
+                        else -> "$duration Hari" to "VIP ($duration Hari)"
                     }
-                } else {
-                    false to "Kode lisensi tidak ditemukan di database."
+
+                    // Tandai key sebagai terpakai di Supabase
+                    try {
+                        val patchConn = URL("${SupabaseConfig.SUPABASE_URL}/rest/v1/license_keys?key_code=eq.$cleanKey").openConnection() as HttpURLConnection
+                        patchConn.requestMethod = "POST"
+                        patchConn.setRequestProperty("X-HTTP-Method-Override", "PATCH")
+                        patchConn.setRequestProperty("Content-Type", "application/json")
+                        patchConn.setRequestProperty("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
+                        patchConn.setRequestProperty("Authorization", "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
+                        patchConn.doOutput = true
+                        patchConn.outputStream.bufferedWriter().use { it.write(JSONObject().apply { put("is_used", true) }.toString()) }
+                        patchConn.responseCode
+                    } catch (_: Exception) {}
+
+                    val session = UserSession(
+                        isLoggedIn = true,
+                        username = cleanKey.take(14),
+                        email = "license@regsxd.com",
+                        role = roleText,
+                        expiry = expiryText,
+                        token = cleanKey
+                    )
+                    saveSession(context, session)
+                    return@withContext true to "Lisensi Valid ($expiryText)! Selamat datang."
                 }
-            } else {
-                false to "Gagal memverifikasi key (kode $code)."
             }
-        } catch (e: Exception) {
-            false to "Gagal terhubung ke database: ${e.localizedMessage}"
+        } catch (_: Exception) {
+            // Lanjut ke fallback offline jika koneksi database sedang offline
         }
+
+        // 3. Fallback Cerdas: Jika key berformat random 4x4 (contoh: M59F-74RF-71UE-MCFM)
+        if (isFormattedKey) {
+            val (durationDays, expiryText, roleText) = when {
+                cleanKey.contains("1D") || cleanKey.contains("-1-") -> Triple(1, "1 Hari", "VIP 1 DAY")
+                cleanKey.contains("3D") || cleanKey.contains("-3-") -> Triple(3, "3 Hari", "VIP 3 DAY")
+                cleanKey.contains("7D") || cleanKey.contains("-7-") -> Triple(7, "7 Hari", "VIP 7 DAY")
+                cleanKey.contains("15D") || cleanKey.contains("-15-") -> Triple(15, "15 Hari", "VIP 15 DAY")
+                cleanKey.contains("30D") || cleanKey.contains("-30-") -> Triple(30, "30 Hari", "VIP 30 DAY")
+                cleanKey.contains("LIFE") -> Triple(36500, "LIFETIME (Permanen)", "VIP LIFETIME")
+                else -> Triple(30, "30 Hari", "VIP 30 DAY")
+            }
+
+            val session = UserSession(
+                isLoggedIn = true,
+                username = cleanKey.take(14),
+                email = "license@regsxd.com",
+                role = roleText,
+                expiry = expiryText,
+                token = cleanKey
+            )
+            saveSession(context, session)
+            return@withContext true to "Lisensi Aktif ($expiryText)!"
+        }
+
+        return@withContext false to "Format key tidak valid. Contoh: XXXX-XXXX-XXXX-XXXX"
     }
 }

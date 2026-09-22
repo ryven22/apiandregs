@@ -109,16 +109,32 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ExternalAndroidByRegsxdTheme {
+                val context = LocalContext.current
+                var userSession by remember { mutableStateOf(AuthManager.getSession(context)) }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = BlackBackground
                 ) {
-                    PatchMenuScreen(
-                        hasAllFiles = hasStorageAccess(),
-                        refreshKey = permissionRefresh.intValue,
-                        onRequestPermission = { requestStorageAccess() },
-                        onOpenAllFilesSettings = { openAllFilesSettings() }
-                    )
+                    if (!userSession.isLoggedIn) {
+                        LicenseLoginScreen(
+                            onLoginSuccess = {
+                                userSession = AuthManager.getSession(context)
+                            }
+                        )
+                    } else {
+                        PatchMenuScreen(
+                            hasAllFiles = hasStorageAccess(),
+                            refreshKey = permissionRefresh.intValue,
+                            userSession = userSession,
+                            onLogout = {
+                                AuthManager.logout(context)
+                                userSession = AuthManager.getSession(context)
+                            },
+                            onRequestPermission = { requestStorageAccess() },
+                            onOpenAllFilesSettings = { openAllFilesSettings() }
+                        )
+                    }
                 }
             }
         }
@@ -172,6 +188,8 @@ class MainActivity : ComponentActivity() {
 fun PatchMenuScreen(
     hasAllFiles: Boolean,
     refreshKey: Int,
+    userSession: UserSession,
+    onLogout: () -> Unit,
     onRequestPermission: () -> Unit,
     onOpenAllFilesSettings: () -> Unit
 ) {
@@ -190,8 +208,6 @@ fun PatchMenuScreen(
     var shizukuOk by remember(refreshKey, safTick) { mutableStateOf(ShizukuHelper.hasPermission()) }
     var shellHits by remember { mutableStateOf<Map<String, Boolean>?>(null) }
     var selectedPkg by remember { mutableStateOf(PatchCatalog.items[0].packageName) }
-    var userSession by remember { mutableStateOf(AuthManager.getSession(context)) }
-    var showLoginDialog by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
 
     fun appendLog(s: String) {
@@ -258,8 +274,8 @@ fun PatchMenuScreen(
 
     fun doInject(item: PatchItem) {
         if (!userSession.isLoggedIn) {
-            appendLog("Akses ditolak: Harap login akun / key terlebih dahulu.")
-            showLoginDialog = true
+            appendLog("Akses ditolak: Harap login lisensi terlebih dahulu.")
+            onLogout()
             return
         }
         selectedPkg = item.packageName
@@ -620,41 +636,24 @@ fun PatchMenuScreen(
                         }
                         Text(
                             text = "Keluar",
-                            color = TextGrey,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .clickable {
-                                    AuthManager.logout(context)
-                                    userSession = AuthManager.getSession(context)
-                                    appendLog("Sesi login ditutup.")
-                                }
-                                .padding(top = 2.dp)
-                        )
-                    }
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Web Login",
                             color = RedPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .clickable {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SupabaseConfig.WEB_PORTAL_URL))
-                                    context.startActivity(intent)
+                                    onLogout()
                                 }
-                                .padding(end = 12.dp)
+                                .padding(top = 2.dp)
                         )
-                        Button(
-                            onClick = { showLoginDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = RedPrimary),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Text("Masuk", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
                     }
+                } else {
+                    Text(
+                        text = "Belum Masuk",
+                        color = RedPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onLogout() }
+                    )
                 }
             }
         }
@@ -1016,135 +1015,155 @@ fun PatchMenuScreen(
         )
     }
 
-    if (showLoginDialog) {
-        var authTab by remember { mutableIntStateOf(0) }
-        var inputEmail by remember { mutableStateOf("") }
-        var inputPassword by remember { mutableStateOf("") }
-        var inputKey by remember { mutableStateOf("") }
-        var authBusy by remember { mutableStateOf(false) }
-        var authError by remember { mutableStateOf("") }
+}
 
-        AlertDialog(
-            onDismissRequest = { if (!authBusy) showLoginDialog = false },
-            containerColor = BlackSurfaceVariant,
-            title = {
-                Text("AUTENTIKASI CENA X REGS", color = TextWhite, fontSize = 15.sp, fontWeight = FontWeight.Black)
-            },
-            text = {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Text(
-                            text = "Login Akun",
-                            color = if (authTab == 0) RedPrimary else TextGrey,
-                            fontWeight = if (authTab == 0) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 13.sp,
-                            modifier = Modifier
-                                .clickable { authTab = 0; authError = "" }
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "Login Key",
-                            color = if (authTab == 1) RedPrimary else TextGrey,
-                            fontWeight = if (authTab == 1) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 13.sp,
-                            modifier = Modifier
-                                .clickable { authTab = 1; authError = "" }
-                                .padding(8.dp)
-                        )
-                    }
+@Composable
+fun LicenseLoginScreen(
+    onLoginSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var inputKey by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BlackBackground)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BlackSurfaceVariant, shape = RoundedCornerShape(16.dp))
+                .border(1.dp, Color(0xFF262A36), shape = RoundedCornerShape(16.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_cena),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "CENA X REGS",
+                color = TextWhite,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = "MASUK DENGAN LISENSI",
+                color = RedPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp
+            )
 
-                    if (authError.isNotEmpty()) {
-                        Text(authError, color = RedPrimary, fontSize = 11.sp, modifier = Modifier.padding(bottom = 6.dp))
-                    }
+            Spacer(modifier = Modifier.height(20.dp))
 
-                    if (authTab == 0) {
-                        androidx.compose.material3.OutlinedTextField(
-                            value = inputEmail,
-                            onValueChange = { inputEmail = it },
-                            label = { Text("Email / Username") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        androidx.compose.material3.OutlinedTextField(
-                            value = inputPassword,
-                            onValueChange = { inputPassword = it },
-                            label = { Text("Kata Sandi") },
-                            singleLine = true,
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else {
-                        androidx.compose.material3.OutlinedTextField(
-                            value = inputKey,
-                            onValueChange = { inputKey = it },
-                            label = { Text("Kode Lisensi / Key") },
-                            placeholder = { Text("REGSXD-1D / 3D / 7D / 15D / 30D / LIFE") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Paket: 1D • 3D • 7D • 15D • 30D • LIFETIME",
-                            color = TextGrey,
-                            fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "Belum punya akun / key? Buka Web Portal",
-                        color = RedPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SupabaseConfig.WEB_PORTAL_URL))
-                            context.startActivity(intent)
-                        }
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        authBusy = true
-                        authError = ""
-                        scope.launch {
-                            val res = if (authTab == 0) {
-                                AuthManager.loginWithEmail(context, inputEmail, inputPassword)
-                            } else {
-                                AuthManager.loginWithKey(context, inputKey)
-                            }
-                            authBusy = false
-                            if (res.first) {
-                                userSession = AuthManager.getSession(context)
-                                appendLog("Login Berhasil: ${userSession.username} (${userSession.role})")
-                                showLoginDialog = false
-                            } else {
-                                authError = res.second
-                            }
-                        }
-                    },
-                    enabled = !authBusy,
-                    colors = ButtonDefaults.buttonColors(containerColor = RedPrimary)
-                ) {
-                    Text(if (authBusy) "Memproses..." else "Masuk", color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showLoginDialog = false },
-                    enabled = !authBusy
-                ) {
-                    Text("Tutup", color = TextGrey)
-                }
+            if (errorMessage.isNotEmpty()) {
+                Text(
+                    text = errorMessage,
+                    color = RedPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
             }
-        )
+
+            androidx.compose.material3.OutlinedTextField(
+                value = inputKey,
+                onValueChange = { 
+                    inputKey = it.uppercase()
+                    errorMessage = "" 
+                },
+                label = { Text("Kode Lisensi / Key") },
+                placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    color = TextWhite,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                ),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = RedPrimary,
+                    unfocusedBorderColor = Color(0xFF353945),
+                    focusedLabelColor = RedPrimary,
+                    unfocusedLabelColor = TextGrey,
+                    cursorColor = RedPrimary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Contoh: M59F-74RF-71UE-MCFM",
+                color = TextGrey,
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    val trimmedKey = inputKey.trim()
+                    if (trimmedKey.isEmpty()) {
+                        errorMessage = "Masukkan kode lisensi terlebih dahulu."
+                        return@Button
+                    }
+                    busy = true
+                    errorMessage = ""
+                    scope.launch {
+                        val (success, msg) = AuthManager.loginWithKey(context, trimmedKey)
+                        busy = false
+                        if (success) {
+                            onLoginSuccess()
+                        } else {
+                            errorMessage = msg
+                        }
+                    }
+                },
+                enabled = !busy,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = RedPrimary,
+                    disabledContainerColor = RedPrimary.copy(alpha = 0.5f)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text(
+                    text = if (busy) "MEMVERIFIKASI LISENSI..." else "AKTIFKAN & MASUK",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Belum punya lisensi? Buka Web Portal",
+                color = RedPrimary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SupabaseConfig.WEB_PORTAL_URL))
+                        context.startActivity(intent)
+                    } catch (_: Exception) {}
+                }
+            )
+        }
     }
 }
