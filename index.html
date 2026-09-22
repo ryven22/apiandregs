@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CENA X REGS • Web Login & License Portal</title>
+    <meta name="description" content="Portal autentikasi akun dan aktivasi lisensi resmi CENA X REGS (External Android by RegsXD) dengan integrasi Supabase.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <div class="auth-card">
+            <!-- Header -->
+            <div class="card-header">
+                <div class="logo-badge">
+                    <div class="logo-dot"></div>
+                    <span>CENA X REGS • AUTH PORTAL</span>
+                </div>
+                <h1 class="title">REGSXD ACCESS</h1>
+                <p class="subtitle">Masuk untuk mengaktifkan akses injeksi game</p>
+            </div>
+
+            <!-- Alert notification box -->
+            <div id="alertBox" class="alert-box"></div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="authTabs">
+                <button type="button" class="tab-btn active" data-tab="login" onclick="switchTab('login')">LOGIN</button>
+                <button type="button" class="tab-btn" data-tab="register" onclick="switchTab('register')">DAFTAR</button>
+                <button type="button" class="tab-btn" data-tab="key" onclick="switchTab('key')">REDEEM</button>
+                <button type="button" class="tab-btn" data-tab="gen" onclick="switchTab('gen')">GENERATE</button>
+            </div>
+
+            <!-- 1. Form Login -->
+            <div class="form-section active" id="loginSection">
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="loginEmail">EMAIL ATAU USERNAME</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="loginEmail" placeholder="regsxd18 / email" required autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="loginPassword">KATA SANDI</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+
+                    <div class="admin-quick-login">
+                        <button type="button" class="btn-admin-fill" onclick="fillAdminCredentials()">
+                            ⚡ Gunakan Akun Owner (regsxd18)
+                        </button>
+                    </div>
+
+                    <button type="submit" id="btnLogin" class="btn-primary">LOGIN SEKARANG</button>
+                </form>
+            </div>
+
+            <!-- 2. Form Register -->
+            <div class="form-section" id="registerSection">
+                <form onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label for="regUsername">USERNAME BARU</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="regUsername" placeholder="contoh: regsxd_user" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="regEmail">EMAIL AKTIF</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="regEmail" placeholder="nama@email.com" required autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="regPassword">BUAT PASSWORD</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="regPassword" placeholder="Minimal 6 karakter" required autocomplete="new-password">
+                        </div>
+                    </div>
+                    <button type="submit" id="btnRegister" class="btn-primary">DAFTAR AKUN BARU</button>
+                </form>
+            </div>
+
+            <!-- 3. Form Redeem Key -->
+            <div class="form-section" id="keySection">
+                <div class="tier-badges-wrap">
+                    <span class="tier-label">PILIHAN PAKET LISENSI RESMI:</span>
+                    <div class="tier-badges">
+                        <span class="badge-tier">1 DAY</span>
+                        <span class="badge-tier">3 DAY</span>
+                        <span class="badge-tier">7 DAY</span>
+                        <span class="badge-tier">15 DAY</span>
+                        <span class="badge-tier">30 DAY</span>
+                        <span class="badge-tier badge-life">LIFETIME</span>
+                    </div>
+                </div>
+                <form onsubmit="handleRedeemKey(event)">
+                    <div class="input-group">
+                        <label for="licenseKey">KODE LISENSI / KEY AKSES</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="licenseKey" placeholder="REGSXD-1D / 3D / 7D / 15D / 30D / LIFE" required style="font-family: var(--font-mono); text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <button type="submit" id="btnRedeem" class="btn-primary">AKTIFKAN LISENSI</button>
+                </form>
+            </div>
+
+            <!-- 4. Form Generate Key (Admin / Owner Panel) -->
+            <div class="form-section" id="genSection">
+                <!-- Jika belum login sebagai admin regsxd18 -->
+                <div id="genLockNotice" class="admin-lock-card">
+                    <div class="lock-icon">🔒</div>
+                    <h3>AKSES GENERATOR KHUSUS OWNER</h3>
+                    <p>Hanya akun Owner (<strong>regsxd18</strong>) yang berhak membuat kode lisensi baru.</p>
+                    <button type="button" class="btn-primary" onclick="window.quickSwitchToAdminLogin()">LOGIN SEBAGAI OWNER</button>
+                </div>
+
+                <!-- Konten Generator (Aktif jika login sebagai regsxd18) -->
+                <div id="genContent" style="display: none;">
+                    <div class="owner-status-bar">
+                        <span class="owner-badge">👑 OWNER: regsxd18</span>
+                        <span class="owner-tag">FULL ACCESS</span>
+                    </div>
+
+                    <form onsubmit="handleGenerateKeys(event)">
+                        <div class="input-group">
+                            <label>PILIH DURASI LISENSI</label>
+                            <div class="duration-grid">
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="1" checked>
+                                    <span class="pill-btn">1 DAY</span>
+                                </label>
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="3">
+                                    <span class="pill-btn">3 DAY</span>
+                                </label>
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="7">
+                                    <span class="pill-btn">7 DAY</span>
+                                </label>
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="15">
+                                    <span class="pill-btn">15 DAY</span>
+                                </label>
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="30">
+                                    <span class="pill-btn">30 DAY</span>
+                                </label>
+                                <label class="duration-pill">
+                                    <input type="radio" name="genDuration" value="36500">
+                                    <span class="pill-btn pill-life">LIFETIME</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="input-row">
+                            <div class="input-group" style="flex: 1;">
+                                <label for="genCount">JUMLAH KEY</label>
+                                <div class="input-wrapper">
+                                    <select id="genCount" class="select-input">
+                                        <option value="1">1 Key</option>
+                                        <option value="5">5 Key</option>
+                                        <option value="10">10 Key</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-group" style="flex: 2;">
+                                <label for="genNote">CATATAN (OPSIONAL)</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="genNote" placeholder="Contoh: Member VIP">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnGen" class="btn-primary">BUAT LICENSE KEY</button>
+                    </form>
+
+                    <!-- Container Hasil Generate Key -->
+                    <div id="genResultBox" class="gen-result-container" style="display: none;">
+                        <div class="gen-header">
+                            <span>KEY BERHASIL DIBUAT:</span>
+                            <button type="button" class="btn-text-copy" onclick="copyAllGeneratedKeys()">SALIN SEMUA</button>
+                        </div>
+                        <div id="genKeysList" class="keys-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Dashboard (Tampil saat sudah login) -->
+            <div class="form-section" id="dashboardSection">
+                <div class="user-badge">
+                    <div class="user-row">
+                        <span class="user-label">PENGGUNA</span>
+                        <span class="user-value" id="dashUsername">-</span>
+                    </div>
+                    <div class="user-row">
+                        <span class="user-label">EMAIL</span>
+                        <span class="user-value" id="dashEmail">-</span>
+                    </div>
+                    <div class="user-row">
+                        <span class="user-label">STATUS</span>
+                        <span class="user-value status-active" id="dashRole">VIP MEMBER</span>
+                    </div>
+                    <div class="user-row">
+                        <span class="user-label">MASA AKTIF</span>
+                        <span class="user-value" id="dashExpiry">30 Hari</span>
+                    </div>
+                </div>
+
+                <!-- Tombol Akses Cepat Generator untuk Admin -->
+                <div id="adminActionBox" style="display: none; margin-bottom: 14px;">
+                    <button type="button" class="btn-primary" style="background: linear-gradient(135deg, #b91c1c, #991b1b); box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);" onclick="switchTab('gen')">
+                        👑 BUKA KEY GENERATOR
+                    </button>
+                </div>
+
+                <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.08); box-shadow: none;" onclick="handleLogout()">LOGOUT / KELUAR</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>EXTERNAL ANDROID BY REGSXD • SUPABASE SECURED</p>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
