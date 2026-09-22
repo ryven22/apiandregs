@@ -1068,7 +1068,7 @@ fun LicenseLoginScreen(
                     Box(
                         modifier = Modifier
                             .size(7.dp)
-                            .background(Color(0xFF10B981), shape = RoundedCornerShape(50))
+                            .background(RedPrimary, shape = RoundedCornerShape(50))
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -1333,28 +1333,22 @@ fun LicenseLoginScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // BUY KEY WHATSAPP CHANNEL CARD (Dedicated Feature)
+            // BUY KEY WHATSAPP CHANNEL CARD (Dark Red & Black Cyberpunk Theme)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(18.dp))
                     .background(
-                        Brush.linearGradient(
+                        Brush.verticalGradient(
                             listOf(
-                                Color(0xFF0D1D16),
-                                Color(0xFF09140F)
+                                Color(0xFF161217),
+                                Color(0xFF0F1017)
                             )
                         )
                     )
                     .border(
-                        width = 1.5.dp,
-                        brush = Brush.linearGradient(
-                            listOf(
-                                Color(0xFF25D366),
-                                Color(0xFF128C7E),
-                                Color(0xFF1A2F25)
-                            )
-                        ),
+                        width = 1.dp,
+                        color = Color(0xFF2C1E26),
                         shape = RoundedCornerShape(18.dp)
                     )
                     .clickable {
@@ -1363,7 +1357,7 @@ fun LicenseLoginScreen(
                             context.startActivity(intent)
                         } catch (_: Exception) {}
                     }
-                    .padding(16.dp)
+                    .padding(18.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1373,53 +1367,61 @@ fun LicenseLoginScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                color = Color(0xFF25D366),
-                                shape = RoundedCornerShape(6.dp)
+                                color = Color(0xFF2A1016),
+                                shape = RoundedCornerShape(6.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, RedPrimary.copy(alpha = 0.5f))
                             ) {
                                 Text(
-                                    text = "WHATSAPP CHANNEL",
-                                    color = Color.Black,
+                                    text = "SALURAN RESMI",
+                                    color = RedPrimary,
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    letterSpacing = 0.8.sp,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "BUY KEY",
-                                color = Color(0xFF25D366),
+                                text = "BUY KEY VIP",
+                                color = Color(0xFF94A3B8),
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(7.dp))
 
                         Text(
                             text = "BELUM PUNYA LISENSI? BUY DISINI",
                             color = TextWhite,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Black,
                             letterSpacing = 0.5.sp
                         )
 
                         Text(
-                            text = "Gabung ke Saluran WhatsApp </> REGS X CENA",
-                            color = Color(0xFF94A3B8),
-                            fontSize = 11.sp
+                            text = "Saluran WhatsApp: </> REGS X CENA",
+                            color = Color(0xFF808599),
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 2.dp)
                         )
                     }
 
+                    Spacer(modifier = Modifier.width(12.dp))
+
                     Surface(
-                        color = Color(0xFF25D366),
-                        shape = RoundedCornerShape(10.dp)
+                        color = Color(0xFF1E1117),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, RedPrimary.copy(alpha = 0.6f))
                     ) {
                         Text(
-                            text = "GABUNG >",
-                            color = Color.Black,
+                            text = "GABUNG ↗",
+                            color = Color.White,
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                         )
                     }
                 }

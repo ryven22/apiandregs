@@ -902,8 +902,8 @@ body {
 .dev-badge-pill {
     display: inline-block;
     background: #141622;
-    border: 1px solid #2e3348;
-    color: #10b981;
+    border: 1px solid #33384c;
+    color: #e2e8f0;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     font-weight: 700;
@@ -939,8 +939,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, #0d1e15, #08140e);
-    border: 1.5px solid #25d366;
+    background: linear-gradient(135deg, #181216, #0f1017);
+    border: 1px solid rgba(220, 38, 38, 0.45);
     border-radius: 10px;
     padding: 12px 14px;
     text-decoration: none;
@@ -949,8 +949,9 @@ body {
 }
 
 .btn-wa-modal:hover {
-    background: linear-gradient(135deg, #132b1e, #0c1c14);
-    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
+    background: linear-gradient(135deg, #22141a, #14151e);
+    border-color: #ef4444;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.25);
     transform: translateY(-1px);
 }
 
@@ -958,8 +959,8 @@ body {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #25d366;
-    box-shadow: 0 0 8px #25d366;
+    background: #dc2626;
+    box-shadow: 0 0 8px #dc2626;
     flex-shrink: 0;
 }
 
@@ -984,7 +985,7 @@ body {
 }
 
 .wa-arrow {
-    color: #25d366;
+    color: #ef4444;
     font-size: 14px;
     font-weight: 900;
 }
@@ -992,8 +993,8 @@ body {
 /* Sidebar WhatsApp Card */
 .sidebar-wa-card {
     display: block;
-    background: linear-gradient(135deg, #0f2017, #08130e);
-    border: 1px solid rgba(37, 211, 102, 0.4);
+    background: linear-gradient(135deg, #161115, #0d0e13);
+    border: 1px solid rgba(220, 38, 38, 0.35);
     border-radius: 10px;
     padding: 12px;
     text-decoration: none;
@@ -1002,15 +1003,16 @@ body {
 }
 
 .sidebar-wa-card:hover {
-    border-color: #25d366;
-    background: linear-gradient(135deg, #142a1f, #0c1a13);
-    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.2);
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #201319, #13141b);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2);
 }
 
 .wa-card-badge {
     display: inline-block;
-    background: #25d366;
-    color: #000000;
+    background: #2a1117;
+    color: #ef4444;
+    border: 1px solid rgba(220, 38, 38, 0.5);
     font-size: 8.5px;
     font-weight: 900;
     padding: 2px 6px;
