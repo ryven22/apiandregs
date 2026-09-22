@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="red_primary">#FFE50914</color>
+    <color name="red_dark">#FFB00610</color>
+    <color name="red_light">#FFFF3B3B</color>
+    <color name="red_container">#FF3A0A0A</color>
+    <color name="black_bg">#FF0A0A0A</color>
+    <color name="black_surface">#FF141414</color>
+    <color name="black_variant">#FF1F1F1F</color>
+    <color name="text_grey">#FFB3B3B3</color>
+    <color name="purple_200">#FFE50914</color>
+    <color name="purple_500">#FFB00610</color>
+    <color name="purple_700">#FF7A040B</color>
+    <color name="teal_200">#FFFF3B3B</color>
+    <color name="teal_700">#FFB00610</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

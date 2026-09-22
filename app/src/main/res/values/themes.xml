@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.ExternalAndroidByRegsxd" parent="android:Theme.Material.NoActionBar.TranslucentDecor">
+        <item name="android:windowBackground">@color/black_bg</item>
+        <item name="android:statusBarColor">@color/black_bg</item>
+        <item name="android:navigationBarColor">@color/black_bg</item>
+        <item name="android:colorAccent">@color/red_primary</item>
+    </style>
+</resources>
