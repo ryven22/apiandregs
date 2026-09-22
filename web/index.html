@@ -3,231 +3,495 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CENA X REGS • Web Login & License Portal</title>
-    <meta name="description" content="Portal autentikasi akun dan aktivasi lisensi resmi CENA X REGS (External Android by RegsXD) dengan integrasi Supabase.">
+    <title>REGS XD • Database & Key Management Portal</title>
+    <meta name="description" content="Official License Key Generator & Management Dashboard for REGS XD / CENA X REGS">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="bg-glow"></div>
 
-    <div class="container">
-        <div class="auth-card">
-            <!-- Header -->
-            <div class="card-header">
-                <div class="logo-badge">
-                    <div class="logo-dot"></div>
-                    <span>CENA X REGS • AUTH PORTAL</span>
+    <!-- Main Dashboard Layout -->
+    <div class="app-layout" id="dashboardLayout">
+        
+        <!-- Left Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-row">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#dc2626" stroke="#ef4444"/>
+                            <path d="M12 8v5M12 16h.01" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-name">REGS XD</div>
+                        <div class="brand-sub">DATABASE IOS</div>
+                    </div>
                 </div>
-                <h1 class="title">REGSXD ACCESS</h1>
-                <p class="subtitle">Masuk untuk mengaktifkan akses injeksi game</p>
+                <div class="badge-owner">OWNER</div>
             </div>
 
-            <!-- Alert notification box -->
-            <div id="alertBox" class="alert-box"></div>
+            <div class="sidebar-menu-title">MENU</div>
 
-            <!-- Tabs -->
-            <div class="tabs" id="authTabs">
-                <button type="button" class="tab-btn active" data-tab="login" onclick="switchTab('login')">LOGIN</button>
-                <button type="button" class="tab-btn" data-tab="register" onclick="switchTab('register')">DAFTAR</button>
-                <button type="button" class="tab-btn" data-tab="key" onclick="switchTab('key')">REDEEM</button>
-                <button type="button" class="tab-btn" data-tab="gen" onclick="switchTab('gen')">GENERATE</button>
+            <nav class="sidebar-nav">
+                <button type="button" class="nav-item active" data-view="keys" onclick="switchNav('keys')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="7.5" cy="15.5" r="4.5"/>
+                            <path d="m21 3-9.5 9.5M15.5 7.5l3 3M18 5l2 2"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Keys</span>
+                    <span class="nav-active-dot"></span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="license" onclick="switchNav('license')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">License</span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="revenue" onclick="switchNav('revenue')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Revenue</span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="analytics" onclick="switchNav('analytics')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Analytics</span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="activity" onclick="switchNav('activity')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Activity Log</span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="settings" onclick="switchNav('settings')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Settings</span>
+                </button>
+
+                <button type="button" class="nav-item" data-view="owner" onclick="switchNav('owner')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Owner Panel</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" onclick="handleLogout()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Mobile Top Bar -->
+            <div class="mobile-bar">
+                <div class="brand-row">
+                    <div class="brand-icon-sm">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#dc2626"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+                    </div>
+                    <span class="brand-name">REGS XD</span>
+                </div>
+                <button type="button" class="mobile-toggle" onclick="toggleSidebar()">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
             </div>
 
-            <!-- 1. Form Login -->
-            <div class="form-section active" id="loginSection">
-                <form onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label for="loginEmail">EMAIL ATAU USERNAME</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="loginEmail" placeholder="regsxd18 / email" required autocomplete="username">
-                        </div>
+            <!-- View: Keys (Main View matching Screenshot) -->
+            <section class="view-panel active" id="viewKeys">
+                
+                <!-- View Header -->
+                <div class="view-header">
+                    <h1 class="view-title">Keys</h1>
+                    <p class="view-subtitle">Generate and manage all license keys</p>
+                </div>
+
+                <!-- Stat Counters Row (5 Cards) -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-num" id="statTotal">10</div>
+                        <div class="stat-label">TOTAL</div>
                     </div>
-                    <div class="input-group">
-                        <label for="loginPassword">KATA SANDI</label>
-                        <div class="input-wrapper">
-                            <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                    <div class="stat-card">
+                        <div class="stat-num" id="statPaid">10</div>
+                        <div class="stat-label">PAID</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num" id="statFree">0</div>
+                        <div class="stat-label">FREE</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num text-green" id="statValid">9</div>
+                        <div class="stat-label">VALID</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num text-red" id="statExpired">1</div>
+                        <div class="stat-label">EXPIRED</div>
+                    </div>
+                </div>
+
+                <!-- Generate Keys Card -->
+                <div class="card-panel">
+                    <div class="card-section-title">GENERATE KEYS</div>
+
+                    <form class="gen-form-grid" onsubmit="handleGenerateKeys(event)">
+                        <!-- Duration Column -->
+                        <div class="form-col duration-col">
+                            <div class="field-header">
+                                <label class="field-label">DURATION</label>
+                                <div class="duration-mode-pills">
+                                    <button type="button" class="d-pill active" id="pillPreset" onclick="setDurationMode('preset')">Preset</button>
+                                    <button type="button" class="d-pill" id="pillCustom" onclick="setDurationMode('custom')">Custom Days</button>
+                                    <button type="button" class="d-pill" id="pillDate" onclick="setDurationMode('date')">Pick Date</button>
+                                </div>
+                            </div>
+
+                            <div class="select-wrapper" id="wrapPreset">
+                                <select id="selDuration" class="dark-input dark-select">
+                                    <option value="1">1 Day</option>
+                                    <option value="3">3 Days</option>
+                                    <option value="7" selected>7 Days</option>
+                                    <option value="15">15 Days</option>
+                                    <option value="30">30 Days</option>
+                                    <option value="36500">Lifetime</option>
+                                </select>
+                            </div>
+
+                            <div class="custom-days-wrapper hidden" id="wrapCustom">
+                                <input type="number" id="inputCustomDays" class="dark-input" min="1" max="3650" placeholder="Jumlah hari (cth: 45)">
+                            </div>
+
+                            <div class="custom-date-wrapper hidden" id="wrapDate">
+                                <input type="date" id="inputPickDate" class="dark-input">
+                            </div>
+                        </div>
+
+                        <!-- Count Column -->
+                        <div class="form-col count-col">
+                            <label class="field-label" for="inputCount">COUNT (MAX 50)</label>
+                            <input type="number" id="inputCount" class="dark-input" min="1" max="50" value="1">
+                        </div>
+
+                        <!-- Note Column -->
+                        <div class="form-col note-col">
+                            <label class="field-label" for="inputNote">NOTE (OPTIONAL)</label>
+                            <input type="text" id="inputNote" class="dark-input" placeholder="e.g. VIP user">
+                        </div>
+
+                        <!-- Type Radio Column -->
+                        <div class="form-col type-col">
+                            <label class="field-label">TYPE</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="keyType" value="Paid" checked>
+                                    <span class="custom-radio"></span>
+                                    <span class="radio-label">Paid</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="keyType" value="Free">
+                                    <span class="custom-radio"></span>
+                                    <span class="radio-label">Free</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="keyType" value="Owner">
+                                    <span class="custom-radio"></span>
+                                    <span class="radio-label">Owner</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Action Column -->
+                        <div class="form-col action-col">
+                            <button type="submit" id="btnGenSubmit" class="btn-generate-red">
+                                <span class="btn-text">Generate Key</span>
+                                <span class="spinner hidden"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- All Keys Table Card -->
+                <div class="card-panel">
+                    <div class="table-top-bar">
+                        <div class="table-title-group">
+                            <h2 class="table-heading" id="tableHeading">ALL KEYS (10)</h2>
+                        </div>
+
+                        <div class="table-controls">
+                            <button type="button" class="btn-amber-outline" id="btnPauseAll" onclick="handlePauseAllKeys()">
+                                Pause All Keys
+                            </button>
+
+                            <div class="filter-pills">
+                                <button type="button" class="filter-pill active" data-filter="all" onclick="setFilter('all')">All</button>
+                                <button type="button" class="filter-pill" data-filter="Paid" onclick="setFilter('Paid')">Paid</button>
+                                <button type="button" class="filter-pill" data-filter="Free" onclick="setFilter('Free')">Free</button>
+                            </div>
+
+                            <div class="search-box">
+                                <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                <input type="text" id="searchInput" class="search-input" placeholder="Search key, note, device..." oninput="handleSearch(this.value)">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="admin-quick-login">
-                        <button type="button" class="btn-admin-fill" onclick="fillAdminCredentials()">
-                            ⚡ Gunakan Akun Owner (regsxd18)
+                    <!-- Keys Table -->
+                    <div class="table-responsive">
+                        <table class="keys-table">
+                            <thead>
+                                <tr>
+                                    <th>KEY</th>
+                                    <th>TYPE</th>
+                                    <th>DURATION</th>
+                                    <th>STATUS</th>
+                                    <th>CREATED</th>
+                                    <th>EXPIRES</th>
+                                    <th>DEVICE</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keysTableBody">
+                                <!-- Populated dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- View: License Check / Redeem -->
+            <section class="view-panel" id="viewLicense">
+                <div class="view-header">
+                    <h1 class="view-title">License Lookup & Validation</h1>
+                    <p class="view-subtitle">Periksa status, durasi, dan masa aktif lisensi</p>
+                </div>
+                <div class="card-panel">
+                    <div class="lookup-box">
+                        <input type="text" id="lookupKeyInput" class="dark-input" placeholder="Masukkan kode lisensi (contoh: 0VAW-LPE4-XSHQ-QUHJ)">
+                        <button type="button" class="btn-generate-red" onclick="handleValidateLookup()">Periksa Lisensi</button>
+                    </div>
+                    <div id="lookupResult" class="lookup-result hidden"></div>
+                </div>
+            </section>
+
+            <!-- View: Revenue -->
+            <section class="view-panel" id="viewRevenue">
+                <div class="view-header">
+                    <h1 class="view-title">Revenue & Sales</h1>
+                    <p class="view-subtitle">Ringkasan estimasi penjualan paket lisensi</p>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-num text-green" id="revTotalRp">Rp 1.450.000</div>
+                        <div class="stat-label">TOTAL ESTIMASI OMSET</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num" id="revPaidCount">10</div>
+                        <div class="stat-label">PAID LICENSES</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num text-green">100%</div>
+                        <div class="stat-label">PAID RATE</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Analytics -->
+            <section class="view-panel" id="viewAnalytics">
+                <div class="view-header">
+                    <h1 class="view-title">Analytics</h1>
+                    <p class="view-subtitle">Distribusi durasi dan statistik lisensi</p>
+                </div>
+                <div class="card-panel">
+                    <div class="analytics-grid">
+                        <div class="analytics-item">
+                            <span class="a-label">1 Day Keys</span>
+                            <div class="a-bar"><div class="a-fill" style="width: 25%"></div></div>
+                            <span class="a-val">2 Keys</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="a-label">3 Days Keys</span>
+                            <div class="a-bar"><div class="a-fill" style="width: 15%"></div></div>
+                            <span class="a-val">1 Key</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="a-label">7 Days Keys</span>
+                            <div class="a-bar"><div class="a-fill" style="width: 45%"></div></div>
+                            <span class="a-val">4 Keys</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="a-label">30 Days Keys</span>
+                            <div class="a-bar"><div class="a-fill" style="width: 20%"></div></div>
+                            <span class="a-val">2 Keys</span>
+                        </div>
+                        <div class="analytics-item">
+                            <span class="a-label">Lifetime Keys</span>
+                            <div class="a-bar"><div class="a-fill" style="width: 10%"></div></div>
+                            <span class="a-val">1 Key</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Activity Log -->
+            <section class="view-panel" id="viewActivity">
+                <div class="view-header">
+                    <h1 class="view-title">Activity Log</h1>
+                    <p class="view-subtitle">Riwayat pembuatan, salin, dan validasi key</p>
+                </div>
+                <div class="card-panel">
+                    <div class="activity-stream" id="activityStream">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Settings -->
+            <section class="view-panel" id="viewSettings">
+                <div class="view-header">
+                    <h1 class="view-title">System Settings</h1>
+                    <p class="view-subtitle">Konfigurasi Database Cloud & API Vercel</p>
+                </div>
+                <div class="card-panel">
+                    <div class="settings-group">
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-name">Database Cloud (Supabase)</div>
+                                <div class="setting-desc">Status koneksi PostgreSQL REST API</div>
+                            </div>
+                            <span class="badge-pill active-badge">Connected (Online)</span>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-name">Vercel Serverless REST API</div>
+                                <div class="setting-desc">Endpoint https://apiandregs.vercel.app/api/*</div>
+                            </div>
+                            <span class="badge-pill active-badge">Deployed (Live)</span>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-name">Format Key Otomatis</div>
+                                <div class="setting-desc">Format acak 4 blok karakter (XXXX-XXXX-XXXX-XXXX)</div>
+                            </div>
+                            <span class="badge-pill">Alphanumeric 16-Chars</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Owner Panel -->
+            <section class="view-panel" id="viewOwner">
+                <div class="view-header">
+                    <h1 class="view-title">Owner Panel</h1>
+                    <p class="view-subtitle">Akses Khusus Master Admin RegsXD</p>
+                </div>
+                <div class="card-panel">
+                    <div class="owner-controls">
+                        <button type="button" class="btn-generate-red" onclick="exportKeysCSV()">
+                            ⬇️ Export Semua Key (CSV)
+                        </button>
+                        <button type="button" class="btn-amber-outline" onclick="exportKeysJSON()">
+                            💾 Export JSON Backup
                         </button>
                     </div>
+                </div>
+            </section>
 
-                    <button type="submit" id="btnLogin" class="btn-primary">LOGIN SEKARANG</button>
-                </form>
+        </main>
+    </div>
+
+    <!-- Login Modal (Muncul jika belum login Owner) -->
+    <div class="modal-backdrop hidden" id="loginModal">
+        <div class="login-modal-box">
+            <div class="login-modal-header">
+                <div class="brand-icon-modal">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                        <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#dc2626"/>
+                    </svg>
+                </div>
+                <h2 class="modal-title">REGS XD • OWNER ACCESS</h2>
+                <p class="modal-subtitle">Masuk untuk membuka dashboard generate key & database</p>
             </div>
 
-            <!-- 2. Form Register -->
-            <div class="form-section" id="registerSection">
-                <form onsubmit="handleRegister(event)">
-                    <div class="input-group">
-                        <label for="regUsername">USERNAME BARU</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="regUsername" placeholder="contoh: regsxd_user" required>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="regEmail">EMAIL AKTIF</label>
-                        <div class="input-wrapper">
-                            <input type="email" id="regEmail" placeholder="nama@email.com" required autocomplete="email">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="regPassword">BUAT PASSWORD</label>
-                        <div class="input-wrapper">
-                            <input type="password" id="regPassword" placeholder="Minimal 6 karakter" required autocomplete="new-password">
-                        </div>
-                    </div>
-                    <button type="submit" id="btnRegister" class="btn-primary">DAFTAR AKUN BARU</button>
-                </form>
-            </div>
-
-            <!-- 3. Form Redeem Key -->
-            <div class="form-section" id="keySection">
-                <div class="tier-badges-wrap">
-                    <span class="tier-label">PILIHAN PAKET LISENSI RESMI:</span>
-                    <div class="tier-badges">
-                        <span class="badge-tier">1 DAY</span>
-                        <span class="badge-tier">3 DAY</span>
-                        <span class="badge-tier">7 DAY</span>
-                        <span class="badge-tier">15 DAY</span>
-                        <span class="badge-tier">30 DAY</span>
-                        <span class="badge-tier badge-life">LIFETIME</span>
-                    </div>
-                </div>
-                <form onsubmit="handleRedeemKey(event)">
-                    <div class="input-group">
-                        <label for="licenseKey">KODE LISENSI / KEY AKSES</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="licenseKey" placeholder="REGSXD-1D / 3D / 7D / 15D / 30D / LIFE" required style="font-family: var(--font-mono); text-transform: uppercase;">
-                        </div>
-                    </div>
-                    <button type="submit" id="btnRedeem" class="btn-primary">AKTIFKAN LISENSI</button>
-                </form>
-            </div>
-
-            <!-- 4. Form Generate Key (Admin / Owner Panel) -->
-            <div class="form-section" id="genSection">
-                <!-- Jika belum login sebagai admin regsxd18 -->
-                <div id="genLockNotice" class="admin-lock-card">
-                    <div class="lock-icon">🔒</div>
-                    <h3>AKSES GENERATOR KHUSUS OWNER</h3>
-                    <p>Hanya akun Owner (<strong>regsxd18</strong>) yang berhak membuat kode lisensi baru.</p>
-                    <button type="button" class="btn-primary" onclick="window.quickSwitchToAdminLogin()">LOGIN SEBAGAI OWNER</button>
+            <form onsubmit="handleModalLogin(event)">
+                <div class="input-field-group">
+                    <label class="field-label" for="loginUsername">USERNAME / EMAIL</label>
+                    <input type="text" id="loginUsername" class="dark-input" placeholder="regsxd18" required>
                 </div>
 
-                <!-- Konten Generator (Aktif jika login sebagai regsxd18) -->
-                <div id="genContent" style="display: none;">
-                    <div class="owner-status-bar">
-                        <span class="owner-badge">👑 OWNER: regsxd18</span>
-                        <span class="owner-tag">FULL ACCESS</span>
-                    </div>
-
-                    <form onsubmit="handleGenerateKeys(event)">
-                        <div class="input-group">
-                            <label>PILIH DURASI LISENSI</label>
-                            <div class="duration-grid">
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="1" checked>
-                                    <span class="pill-btn">1 DAY</span>
-                                </label>
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="3">
-                                    <span class="pill-btn">3 DAY</span>
-                                </label>
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="7">
-                                    <span class="pill-btn">7 DAY</span>
-                                </label>
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="15">
-                                    <span class="pill-btn">15 DAY</span>
-                                </label>
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="30">
-                                    <span class="pill-btn">30 DAY</span>
-                                </label>
-                                <label class="duration-pill">
-                                    <input type="radio" name="genDuration" value="36500">
-                                    <span class="pill-btn pill-life">LIFETIME</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="input-row">
-                            <div class="input-group" style="flex: 1;">
-                                <label for="genCount">JUMLAH KEY</label>
-                                <div class="input-wrapper">
-                                    <select id="genCount" class="select-input">
-                                        <option value="1">1 Key</option>
-                                        <option value="5">5 Key</option>
-                                        <option value="10">10 Key</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="input-group" style="flex: 2;">
-                                <label for="genNote">CATATAN (OPSIONAL)</label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="genNote" placeholder="Contoh: Member VIP">
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btnGen" class="btn-primary">BUAT LICENSE KEY</button>
-                    </form>
-
-                    <!-- Container Hasil Generate Key -->
-                    <div id="genResultBox" class="gen-result-container" style="display: none;">
-                        <div class="gen-header">
-                            <span>KEY BERHASIL DIBUAT:</span>
-                            <button type="button" class="btn-text-copy" onclick="copyAllGeneratedKeys()">SALIN SEMUA</button>
-                        </div>
-                        <div id="genKeysList" class="keys-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Dashboard (Tampil saat sudah login) -->
-            <div class="form-section" id="dashboardSection">
-                <div class="user-badge">
-                    <div class="user-row">
-                        <span class="user-label">PENGGUNA</span>
-                        <span class="user-value" id="dashUsername">-</span>
-                    </div>
-                    <div class="user-row">
-                        <span class="user-label">EMAIL</span>
-                        <span class="user-value" id="dashEmail">-</span>
-                    </div>
-                    <div class="user-row">
-                        <span class="user-label">STATUS</span>
-                        <span class="user-value status-active" id="dashRole">VIP MEMBER</span>
-                    </div>
-                    <div class="user-row">
-                        <span class="user-label">MASA AKTIF</span>
-                        <span class="user-value" id="dashExpiry">30 Hari</span>
-                    </div>
+                <div class="input-field-group">
+                    <label class="field-label" for="loginPass">KATA SANDI</label>
+                    <input type="password" id="loginPass" class="dark-input" placeholder="••••••••" required>
                 </div>
 
-                <!-- Tombol Akses Cepat Generator untuk Admin -->
-                <div id="adminActionBox" style="display: none; margin-bottom: 14px;">
-                    <button type="button" class="btn-primary" style="background: linear-gradient(135deg, #b91c1c, #991b1b); box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);" onclick="switchTab('gen')">
-                        👑 BUKA KEY GENERATOR
+                <div class="quick-admin-box">
+                    <button type="button" class="btn-quick-fill" onclick="quickFillAdmin()">
+                        ⚡ Gunakan Akun Owner (regsxd18)
                     </button>
                 </div>
 
-                <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.08); box-shadow: none;" onclick="handleLogout()">LOGOUT / KELUAR</button>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>EXTERNAL ANDROID BY REGSXD • SUPABASE SECURED</p>
+                <button type="submit" id="btnModalSubmit" class="btn-modal-login">
+                    BUKA DASHBOARD
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Application Script -->
-    <script type="module" src="app.js"></script>
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Supabase JS Client & App Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

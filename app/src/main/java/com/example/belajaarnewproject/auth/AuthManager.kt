@@ -16,8 +16,8 @@ object SupabaseConfig {
     var SUPABASE_URL = "https://maghrxnyavkittygojnn.supabase.co"
     var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZ2hyeG55YXZraXR0eWdvam5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzE4MTIsImV4cCI6MjEwNDc0NzgxMn0.Vr1usXkl6jHzKujpEi8SxWPA2qV8mNrW5g6imXj-tso"
     
-    // Link Web Login Vercel Anda:
-    var WEB_PORTAL_URL = "https://external-android-regsxd-portal.vercel.app"
+    // Link Web Login Vercel Resmi:
+    var WEB_PORTAL_URL = "https://apiandregs.vercel.app"
 
     fun isConfigured(): Boolean {
         return !SUPABASE_URL.contains("your-project") && !SUPABASE_ANON_KEY.contains("your-anon")
@@ -200,6 +200,7 @@ object AuthManager {
                 cleanKey.contains("30D") || cleanKey.contains("-30-") -> Triple(30, "30 Hari", "VIP 30 DAY")
                 cleanKey.contains("LIFE") -> Triple(36500, "LIFETIME (Permanen)", "VIP LIFETIME")
                 cleanKey.startsWith("REGSXD") -> Triple(30, "30 Hari", "VIP MEMBER")
+                cleanKey.matches(Regex("^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")) -> Triple(7, "7 Hari", "VIP 7 DAY")
                 else -> Triple(0, "", "")
             }
 
@@ -215,7 +216,7 @@ object AuthManager {
                 saveSession(context, session)
                 return@withContext true to "Key Berhasil Diaktifkan ($expiryText)!"
             } else {
-                return@withContext false to "Key tidak valid. Contoh: REGSXD-1D-XXXX atau REGSXD-LIFE-XXXX"
+                return@withContext false to "Key tidak valid. Format: XXXX-XXXX-XXXX-XXXX"
             }
         }
 

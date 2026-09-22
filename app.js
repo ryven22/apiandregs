@@ -1,509 +1,692 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_CONFIG } from './supabase_config.js';
+/**
+ * REGS XD • Dashboard Controller & Real-Time Key Engine
+ * Formats: Random 4x4 Blocks (XXXX-XXXX-XXXX-XXXX)
+ * Integration: Supabase Database Cloud & Vercel API
+ */
 
-// Setup Supabase Client
-const isConfigured = SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.includes("your-project") && 
-                     SUPABASE_CONFIG.anonKey && !SUPABASE_CONFIG.anonKey.includes("your-anon");
-
-export const supabase = isConfigured ? createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey) : null;
-
-// DOM Elements
-const alertBox = document.getElementById('alertBox');
-const tabButtons = document.querySelectorAll('.tab-btn');
-const formSections = document.querySelectorAll('.form-section');
-
-// Helper Isi Cepat Kredensial Owner
-window.fillAdminCredentials = function() {
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPassword');
-    if (emailInput && passInput) {
-        emailInput.value = 'regsxd18';
-        passInput.value = 'leaaaimut1';
-        showAlert('Kredensial Owner terisi. Klik "LOGIN SEKARANG" untuk masuk.', false);
+// Initial Seed Data matching the User's Screenshot exactly (10 keys)
+const INITIAL_KEYS = [
+    {
+        id: 'seed-1',
+        key_code: '0VAW-LPE4-XSHQ-QUHJ',
+        type: 'Paid',
+        duration_days: 1,
+        duration_text: '1 Day',
+        status: 'Active',
+        created_at: '21 Sept 2026',
+        expires_at: '22 Sept 2026',
+        device: '00754884-38F7-42...',
+        note: 'VIP user'
+    },
+    {
+        id: 'seed-2',
+        key_code: '8P53-C8VC-SZNV-1TF7',
+        type: 'Paid',
+        duration_days: 3,
+        duration_text: '3 Days',
+        status: 'Active',
+        created_at: '20 Sept 2026',
+        expires_at: '23 Sept 2026',
+        device: '996AC412-5C42-49...',
+        note: 'Telegram VIP'
+    },
+    {
+        id: 'seed-3',
+        key_code: 'DMMJ-5024-HGSE-QGUE',
+        type: 'Paid',
+        duration_days: 7,
+        duration_text: '7 Days',
+        status: 'Active',
+        created_at: '20 Sept 2026',
+        expires_at: '27 Sept 2026',
+        device: 'D9C1322C-C41A-40...',
+        note: 'Fast Turnament'
+    },
+    {
+        id: 'seed-4',
+        key_code: '1GTM-AZ48-BJW7-5ZH3',
+        type: 'Paid',
+        duration_days: 1,
+        duration_text: '1 Day',
+        status: 'Expired',
+        created_at: '20 Sept 2026',
+        expires_at: '21 Sept 2026',
+        device: '0359D338-8CB7-4E...',
+        note: 'Trial user'
+    },
+    {
+        id: 'seed-5',
+        key_code: '6HRM-FCZT-R3LH-YLTS',
+        type: 'Owner',
+        duration_days: 7,
+        duration_text: '7 Days',
+        status: 'Active',
+        created_at: '20 Sept 2026',
+        expires_at: '27 Sept 2026',
+        device: '4E353C67-8377-4F...',
+        note: 'Admin Regs'
+    },
+    {
+        id: 'seed-6',
+        key_code: 'G9GJ-2UBU-9KDT-VFCQ',
+        type: 'Paid',
+        duration_days: 30,
+        duration_text: '30 Days',
+        status: 'Active',
+        created_at: '19 Sept 2026',
+        expires_at: '19 Oct 2026',
+        device: 'CC82ADFE-549B-46...',
+        note: 'Monthly VIP'
+    },
+    {
+        id: 'seed-7',
+        key_code: '4TD0-ETUL-DRY9-5FU0',
+        type: 'Paid',
+        duration_days: 7,
+        duration_text: '7 Days',
+        status: 'Active',
+        created_at: '18 Sept 2026',
+        expires_at: '25 Sept 2026',
+        device: 'DC29F3CF-13FC-45...',
+        note: 'Streamer Regs'
+    },
+    {
+        id: 'seed-8',
+        key_code: 'ZS10-LH06-WEXX-CVKN',
+        type: 'Owner',
+        duration_days: 36500,
+        duration_text: 'Lifetime',
+        status: 'Active',
+        created_at: '18 Sept 2026',
+        expires_at: '25 Aug 2126',
+        device: '4BF16D4D-D061-46...',
+        note: 'Owner Master Key'
+    },
+    {
+        id: 'seed-9',
+        key_code: 'K3N9-8YRA-2PLM-90QW',
+        type: 'Paid',
+        duration_days: 15,
+        duration_text: '15 Days',
+        status: 'Active',
+        created_at: '17 Sept 2026',
+        expires_at: '02 Oct 2026',
+        device: 'E8314F29-01BA-48...',
+        note: 'Reseller Key'
+    },
+    {
+        id: 'seed-10',
+        key_code: '7XWQ-V92P-MM4T-LK91',
+        type: 'Paid',
+        duration_days: 30,
+        duration_text: '30 Days',
+        status: 'Active',
+        created_at: '16 Sept 2026',
+        expires_at: '16 Oct 2026',
+        device: 'B1920834-55C1-39...',
+        note: 'Pro Gamer VIP'
     }
-};
+];
 
-window.quickSwitchToAdminLogin = function() {
-    window.switchTab('login');
-    window.fillAdminCredentials();
-};
+// App State
+let allKeys = [];
+let currentFilter = 'all';
+let currentSearch = '';
+let isPausedAll = false;
+let currentDurationMode = 'preset';
+let supabaseClient = null;
 
-// Tab Navigation
-window.switchTab = function(tabName) {
-    tabButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
+// Initialize Supabase Client
+try {
+    if (window.supabase && window.SUPABASE_CONFIG) {
+        supabaseClient = window.supabase.createClient(
+            window.SUPABASE_CONFIG.URL,
+            window.SUPABASE_CONFIG.ANON_KEY
+        );
+    }
+} catch (e) {
+    console.warn('Supabase JS Init Warn:', e);
+}
+
+// Generate Random 4x4 Alphanumeric Key: XXXX-XXXX-XXXX-XXXX
+function generateRandomKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `${seg()}-${seg()}-${seg()}-${seg()}`;
+}
+
+// Generate Masked Device ID
+function generateRandomDeviceId() {
+    const hex = () => Math.random().toString(16).substring(2, 6).toUpperCase();
+    return `${hex()}${hex()}-${hex()}-${hex()}...`;
+}
+
+// Format Date e.g. "21 Sept 2026"
+function formatDateDisplay(d) {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '21 Sept 2026';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sept', 'Okt', 'Nov', 'Des'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+// Add Activity Item
+function logActivity(text) {
+    const stream = document.getElementById('activityStream');
+    if (!stream) return;
+    const timeStr = new Date().toLocaleTimeString('id-ID');
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.style.padding = '8px 0';
+    div.style.borderBottom = '1px solid #1c1d24';
+    div.style.fontSize = '12px';
+    div.style.color = '#9ca3af';
+    div.innerHTML = `<span style="color:#ffffff; font-weight:600;">[${timeStr}]</span> ${text}`;
+    stream.prepend(div);
+}
+
+// Show Toast
+function showToast(message, isSuccess = true) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${isSuccess ? 'toast-success' : ''}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 250);
+    }, 2800);
+}
+
+// Set Duration Selection Mode
+function setDurationMode(mode) {
+    currentDurationMode = mode;
+    document.getElementById('pillPreset').classList.toggle('active', mode === 'preset');
+    document.getElementById('pillCustom').classList.toggle('active', mode === 'custom');
+    document.getElementById('pillDate').classList.toggle('active', mode === 'date');
+
+    document.getElementById('wrapPreset').classList.toggle('hidden', mode !== 'preset');
+    document.getElementById('wrapCustom').classList.toggle('hidden', mode !== 'custom');
+    document.getElementById('wrapDate').classList.toggle('hidden', mode !== 'date');
+}
+
+// Copy Key to Clipboard
+function copyKey(keyText) {
+    navigator.clipboard.writeText(keyText).then(() => {
+        showToast(`📋 Key ${keyText} disalin ke clipboard!`, true);
+        logActivity(`Key <b style="color:#dc2626">${keyText}</b> disalin.`);
+    }).catch(() => {
+        const temp = document.createElement('textarea');
+        temp.value = keyText;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        showToast(`📋 Key ${keyText} disalin ke clipboard!`, true);
     });
-    formSections.forEach(section => {
-        section.classList.toggle('active', section.id === `${tabName}Section`);
-    });
-
-    // Cek Akses Generator (Hanya Admin / Owner regsxd18)
-    if (tabName === 'gen') {
-        const isAdmin = localStorage.getItem('admin_user') === 'regsxd18';
-        const lockNotice = document.getElementById('genLockNotice');
-        const genContent = document.getElementById('genContent');
-        if (lockNotice && genContent) {
-            lockNotice.style.display = isAdmin ? 'none' : 'block';
-            genContent.style.display = isAdmin ? 'block' : 'none';
-        }
-    }
-
-    hideAlert();
-};
-
-function showAlert(message, isError = true) {
-    alertBox.className = `alert-box show ${isError ? 'alert-error' : 'alert-success'}`;
-    alertBox.textContent = message;
 }
 
-function hideAlert() {
-    alertBox.className = 'alert-box';
-    alertBox.textContent = '';
-}
+// Calculate & Update Stat Counters
+function updateStats() {
+    const total = allKeys.length;
+    const paid = allKeys.filter(k => k.type === 'Paid').length;
+    const free = allKeys.filter(k => k.type === 'Free').length;
+    const valid = allKeys.filter(k => k.status === 'Active').length;
+    const expired = allKeys.filter(k => k.status === 'Expired' || k.status === 'Revoked').length;
 
-// Initial session check
-async function initSession() {
-    // 1. Cek Sesi Owner / Master Admin
-    const adminUser = localStorage.getItem('admin_user');
-    if (adminUser === 'regsxd18') {
-        renderDashboard({
-            email: 'regsxd18@cena-regs.com',
-            username: 'regsxd18',
-            role: '👑 OWNER / MASTER ADMIN',
-            expires_at: 'LIFETIME (Permanen)',
-            is_admin: true
-        });
-        return;
-    }
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statPaid').textContent = paid;
+    document.getElementById('statFree').textContent = free;
+    document.getElementById('statValid').textContent = valid;
+    document.getElementById('statExpired').textContent = expired;
+    document.getElementById('tableHeading').textContent = `ALL KEYS (${total})`;
 
-    if (!supabase) {
-        // Mode Demo Pengguna Biasa
-        const demoUser = localStorage.getItem('demo_user');
-        if (demoUser) {
-            renderDashboard({
-                email: demoUser,
-                username: demoUser.split('@')[0],
-                role: 'VIP MEMBER',
-                expires_at: '30 Hari Aktif'
-            });
-        }
-        return;
-    }
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        fetchUserProfile(session.user);
+    const revPaid = document.getElementById('revPaidCount');
+    if (revPaid) revPaid.textContent = paid;
+    const revTotal = document.getElementById('revTotalRp');
+    if (revTotal) {
+        const estRp = paid * 145000;
+        revTotal.textContent = `Rp ${estRp.toLocaleString('id-ID')}`;
     }
 }
 
-async function fetchUserProfile(user) {
-    try {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+// Render Table Rows
+function renderKeysTable() {
+    const tbody = document.getElementById('keysTableBody');
+    if (!tbody) return;
 
-        renderDashboard({
-            email: user.email,
-            username: profile?.username || user.user_metadata?.username || user.email.split('@')[0],
-            role: (profile?.role || 'VIP User').toUpperCase(),
-            expires_at: profile?.expires_at ? new Date(profile.expires_at).toLocaleDateString() : 'Active'
-        });
-    } catch (e) {
-        renderDashboard({
-            email: user.email,
-            username: user.email.split('@')[0],
-            role: 'MEMBER',
-            expires_at: 'Active'
-        });
-    }
-}
+    let filtered = allKeys;
 
-function renderDashboard(data) {
-    document.getElementById('dashUsername').textContent = data.username || data.email;
-    document.getElementById('dashEmail').textContent = data.email;
-    document.getElementById('dashRole').textContent = data.role;
-    document.getElementById('dashExpiry').textContent = data.expires_at;
-
-    // Tampilkan tombol Buka Generator jika role Owner / Admin
-    const adminBox = document.getElementById('adminActionBox');
-    if (adminBox) {
-        const isAdmin = data.is_admin || localStorage.getItem('admin_user') === 'regsxd18';
-        adminBox.style.display = isAdmin ? 'block' : 'none';
+    if (currentFilter === 'Paid') {
+        filtered = filtered.filter(k => k.type === 'Paid');
+    } else if (currentFilter === 'Free') {
+        filtered = filtered.filter(k => k.type === 'Free');
     }
 
-    document.getElementById('authTabs').style.display = 'none';
-    formSections.forEach(s => s.classList.remove('active'));
-    document.getElementById('dashboardSection').classList.add('active');
-}
-
-// 1. Handle Login
-window.handleLogin = async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value;
-    const btn = document.getElementById('btnLogin');
-
-    btn.disabled = true;
-    btn.textContent = 'MEMPROSES...';
-    hideAlert();
-
-    // ⚡ Autentikasi Khusus Owner / Master Admin: regsxd18 : leaaaimut1
-    if ((email.toLowerCase() === 'regsxd18' || email.toLowerCase() === 'regsxd18@admin.com') && pass === 'leaaaimut1') {
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'LOGIN SEKARANG';
-            localStorage.setItem('admin_user', 'regsxd18');
-            renderDashboard({
-                email: 'regsxd18@cena-regs.com',
-                username: 'regsxd18',
-                role: '👑 OWNER / MASTER ADMIN',
-                expires_at: 'LIFETIME (Permanen)',
-                is_admin: true
-            });
-            showAlert('Selamat datang Owner RegsXD! Akses Admin Penuh Aktif.', false);
-        }, 400);
-        return;
+    if (currentSearch) {
+        const q = currentSearch.toLowerCase();
+        filtered = filtered.filter(k => 
+            k.key_code.toLowerCase().includes(q) ||
+            (k.note && k.note.toLowerCase().includes(q)) ||
+            (k.device && k.device.toLowerCase().includes(q))
+        );
     }
 
-    if (!supabase) {
-        // Fallback demo login
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'LOGIN SEKARANG';
-            localStorage.setItem('demo_user', email);
-            renderDashboard({
-                email: email,
-                username: email.split('@')[0],
-                role: 'VIP MEMBER',
-                expires_at: '30 Hari Aktif'
-            });
-            showAlert('Login Berhasil (Mode Demo Supabase)', false);
-        }, 500);
-        return;
-    }
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: pass
-    });
-
-    btn.disabled = false;
-    btn.textContent = 'LOGIN SEKARANG';
-
-    if (error) {
-        showAlert(error.message);
-    } else {
-        showAlert('Login Berhasil!', false);
-        fetchUserProfile(data.user);
-    }
-};
-
-// 2. Handle Register
-window.handleRegister = async function(e) {
-    e.preventDefault();
-    const username = document.getElementById('regUsername').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const pass = document.getElementById('regPassword').value;
-    const btn = document.getElementById('btnRegister');
-
-    if (pass.length < 6) {
-        showAlert('Password minimal 6 karakter!');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'MENDAFTAR...';
-    hideAlert();
-
-    if (!supabase) {
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'DAFTAR AKUN BARU';
-            showAlert('Registrasi berhasil! Silakan login di tab Login.', false);
-            window.switchTab('login');
-        }, 600);
-        return;
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: pass,
-        options: {
-            data: { username: username }
-        }
-    });
-
-    btn.disabled = false;
-    btn.textContent = 'DAFTAR AKUN BARU';
-
-    if (error) {
-        showAlert(error.message);
-    } else {
-        showAlert('Akun berhasil dibuat! Silakan masuk.', false);
-        window.switchTab('login');
-    }
-};
-
-// Helper untuk format nama durasi
-function getDurationLabel(days) {
-    const d = parseInt(days, 10);
-    if (d >= 3650) return 'LIFETIME (Permanen)';
-    if (d === 1) return '1 Hari';
-    if (d === 3) return '3 Hari';
-    if (d === 7) return '7 Hari';
-    if (d === 15) return '15 Hari';
-    if (d === 30) return '30 Hari';
-    return `${d} Hari`;
-}
-
-// 3. Handle Redeem Key
-window.handleRedeemKey = async function(e) {
-    e.preventDefault();
-    const keyInput = document.getElementById('licenseKey');
-    const key = keyInput.value.trim().toUpperCase();
-    const btn = document.getElementById('btnRedeem');
-
-    if (!key) return;
-
-    btn.disabled = true;
-    btn.textContent = 'MEMVALIDASI...';
-    hideAlert();
-
-    if (!supabase) {
-        // Mode Demo Lokal
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'AKTIFKAN LISENSI';
-
-            // Cek di penyimpanan demo local storage atau deteksi format
-            const demoKeys = JSON.parse(localStorage.getItem('demo_license_keys') || '[]');
-            const foundIndex = demoKeys.findIndex(k => k.key_code === key && !k.is_used);
-
-            let durationDays = 30;
-            if (foundIndex !== -1) {
-                durationDays = demoKeys[foundIndex].duration_days;
-                demoKeys[foundIndex].is_used = true;
-                localStorage.setItem('demo_license_keys', JSON.stringify(demoKeys));
-            } else if (key.includes('1D')) {
-                durationDays = 1;
-            } else if (key.includes('3D')) {
-                durationDays = 3;
-            } else if (key.includes('7D')) {
-                durationDays = 7;
-            } else if (key.includes('15D')) {
-                durationDays = 15;
-            } else if (key.includes('30D')) {
-                durationDays = 30;
-            } else if (key.includes('LIFE')) {
-                durationDays = 36500;
-            } else if (!key.startsWith('REGSXD')) {
-                showAlert('Format key tidak valid. Contoh: REGSXD-1D-XXXX atau REGSXD-LIFE-XXXX');
-                return;
-            }
-
-            const durationText = getDurationLabel(durationDays);
-            showAlert(`Sukses! Lisensi ${durationText} berhasil diaktifkan.`, false);
-            keyInput.value = '';
-
-            // Update demo session jika ada
-            const demoUser = localStorage.getItem('demo_user');
-            if (demoUser) {
-                renderDashboard({
-                    email: demoUser,
-                    username: demoUser.split('@')[0],
-                    role: durationDays >= 3650 ? 'VIP LIFETIME' : 'VIP MEMBER',
-                    expires_at: durationText
-                });
-            }
-        }, 600);
-        return;
-    }
-
-    const { data, error } = await supabase
-        .from('license_keys')
-        .select('*')
-        .eq('key_code', key)
-        .eq('is_used', false)
-        .single();
-
-    btn.disabled = false;
-    btn.textContent = 'AKTIFKAN LISENSI';
-
-    if (error || !data) {
-        showAlert('Key tidak valid atau sudah pernah digunakan!');
-    } else {
-        const durationText = getDurationLabel(data.duration_days);
-
-        // Ambil session user saat ini jika ada
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || null;
-
-        // Tandai key sebagai terpakai
-        await supabase
-            .from('license_keys')
-            .update({ 
-                is_used: true, 
-                used_at: new Date(),
-                used_by: userId
-            })
-            .eq('id', data.id);
-
-        // Jika user sedang login, update profile expires_at
-        if (userId) {
-            const expDate = new Date();
-            expDate.setDate(expDate.getDate() + data.duration_days);
-
-            await supabase
-                .from('profiles')
-                .update({
-                    expires_at: expDate.toISOString(),
-                    role: data.duration_days >= 3650 ? 'vip' : 'vip'
-                })
-                .eq('id', userId);
-
-            fetchUserProfile(session.user);
-        }
-
-        keyInput.value = '';
-        showAlert(`Sukses! Lisensi ${durationText} berhasil diaktifkan.`, false);
-    }
-};
-
-// 4. Handle Generate Key (Admin / Owner Generator)
-let currentGeneratedKeys = [];
-
-window.handleGenerateKeys = async function(e) {
-    e.preventDefault();
-    const durationRadio = document.querySelector('input[name="genDuration"]:checked');
-    const durationDays = parseInt(durationRadio?.value || '30', 10);
-    const count = parseInt(document.getElementById('genCount').value || '1', 10);
-    const note = document.getElementById('genNote').value.trim();
-    const btn = document.getElementById('btnGen');
-
-    btn.disabled = true;
-    btn.textContent = 'MEMBUAT KEY...';
-    hideAlert();
-
-    // Tentukan prefix tag durasi
-    let tag = '30D';
-    if (durationDays === 1) tag = '1D';
-    else if (durationDays === 3) tag = '3D';
-    else if (durationDays === 7) tag = '7D';
-    else if (durationDays === 15) tag = '15D';
-    else if (durationDays === 30) tag = '30D';
-    else if (durationDays >= 3650) tag = 'LIFE';
-
-    const newKeys = [];
-    for (let i = 0; i < count; i++) {
-        // Buat random string 6 karakter alfanumerik unik
-        const randStr = Math.random().toString(36).substring(2, 6).toUpperCase() + 
-                        Math.floor(100 + Math.random() * 900);
-        const keyCode = `REGSXD-${tag}-${randStr}`;
-        newKeys.push({
-            key_code: keyCode,
-            duration_days: durationDays,
-            note: note || `Paket ${getDurationLabel(durationDays)}`,
-            is_used: false,
-            created_at: new Date().toISOString()
-        });
-    }
-
-    if (!supabase) {
-        // Simpan di demo local storage
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'BUAT LICENSE KEY';
-
-            const demoKeys = JSON.parse(localStorage.getItem('demo_license_keys') || '[]');
-            demoKeys.push(...newKeys);
-            localStorage.setItem('demo_license_keys', JSON.stringify(demoKeys));
-
-            currentGeneratedKeys = newKeys;
-            renderGeneratedKeysList(newKeys);
-            showAlert(`Berhasil membuat ${newKeys.length} License Key (${getDurationLabel(durationDays)})!`, false);
-        }, 500);
-        return;
-    }
-
-    // Simpan ke Supabase license_keys
-    const insertPayload = newKeys.map(k => ({
-        key_code: k.key_code,
-        duration_days: k.duration_days,
-        note: k.note,
-        is_used: false
-    }));
-
-    const { error } = await supabase
-        .from('license_keys')
-        .insert(insertPayload);
-
-    btn.disabled = false;
-    btn.textContent = 'BUAT LICENSE KEY';
-
-    if (error) {
-        showAlert(`Gagal menyimpan key ke Supabase: ${error.message}`);
-    } else {
-        currentGeneratedKeys = newKeys;
-        renderGeneratedKeysList(newKeys);
-        showAlert(`Berhasil membuat ${newKeys.length} License Key (${getDurationLabel(durationDays)})!`, false);
-    }
-};
-
-function renderGeneratedKeysList(keys) {
-    const box = document.getElementById('genResultBox');
-    const list = document.getElementById('genKeysList');
-    box.style.display = 'block';
-    list.innerHTML = '';
-
-    keys.forEach(k => {
-        const item = document.createElement('div');
-        item.className = 'key-item-row';
-        item.innerHTML = `
-            <div class="key-info">
-                <span class="key-tier-tag">${getDurationLabel(k.duration_days)}</span>
-                <span class="key-code-text">${k.key_code}</span>
-            </div>
-            <button type="button" class="btn-copy-item" onclick="copyKeyToClipboard('${k.key_code}', this)">Salin</button>
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 36px; color: #6b7280;">
+                    Tidak ada key yang sesuai dengan pencarian atau filter.
+                </td>
+            </tr>
         `;
-        list.appendChild(item);
-    });
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(item => {
+        const isOwner = item.type === 'Owner';
+        const typeClass = isOwner ? 'type-owner' : (item.type === 'Free' ? 'type-free' : 'type-paid');
+        const statusClass = item.status === 'Active' ? 'status-active' : (item.status === 'Expired' ? 'status-expired' : 'status-paused');
+
+        return `
+            <tr>
+                <td>
+                    <div class="key-cell">
+                        <div class="key-row">
+                            <span class="key-code">${item.key_code}</span>
+                            <button type="button" class="btn-copy" onclick="copyKey('${item.key_code}')">Copy</button>
+                        </div>
+                        ${isOwner ? '<span class="badge-owner-sub">OWNER KEY</span>' : ''}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge-pill ${typeClass}">${item.type}</span>
+                </td>
+                <td>
+                    <span>${item.duration_text || (item.duration_days >= 3650 ? 'Lifetime' : item.duration_days + ' Days')}</span>
+                </td>
+                <td>
+                    <span class="badge-pill ${statusClass}">${item.status}</span>
+                </td>
+                <td>${item.created_at}</td>
+                <td>${item.expires_at}</td>
+                <td>
+                    <span class="device-masked">${item.device || '-'}</span>
+                </td>
+                <td class="actions-cell">
+                    <button type="button" class="btn-act-revoke" onclick="handleRevokeKey('${item.id}')">Revoke</button>
+                    <button type="button" class="btn-act-delete" onclick="handleDeleteKey('${item.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
-window.copyKeyToClipboard = function(text, btn) {
-    navigator.clipboard.writeText(text).then(() => {
-        const originalText = btn.textContent;
-        btn.textContent = 'Tersalin!';
-        btn.style.background = 'var(--green-success)';
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.style.background = '';
-        }, 1500);
-    });
-};
+// Generate New Keys Action
+async function handleGenerateKeys(e) {
+    e.preventDefault();
 
-window.copyAllGeneratedKeys = function() {
-    if (!currentGeneratedKeys.length) return;
-    const textAll = currentGeneratedKeys.map(k => `${k.key_code} (${getDurationLabel(k.duration_days)})`).join('\n');
-    navigator.clipboard.writeText(textAll).then(() => {
-        showAlert('Semua key berhasil disalin ke clipboard!', false);
-    });
-};
+    const submitBtn = document.getElementById('btnGenSubmit');
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.7';
 
-// 5. Logout
-window.handleLogout = async function() {
-    if (supabase) {
-        await supabase.auth.signOut();
+    let durationDays = 7;
+    let durationText = '7 Days';
+
+    if (currentDurationMode === 'preset') {
+        durationDays = parseInt(document.getElementById('selDuration').value, 10);
+        const selObj = document.getElementById('selDuration');
+        durationText = selObj.options[selObj.selectedIndex].text;
+    } else if (currentDurationMode === 'custom') {
+        const val = parseInt(document.getElementById('inputCustomDays').value, 10);
+        durationDays = isNaN(val) || val <= 0 ? 7 : val;
+        durationText = `${durationDays} Days`;
+    } else if (currentDurationMode === 'date') {
+        const pickDateVal = document.getElementById('inputPickDate').value;
+        if (pickDateVal) {
+            const diffDays = Math.ceil((new Date(pickDateVal) - new Date()) / (1000 * 60 * 60 * 24));
+            durationDays = Math.max(diffDays, 1);
+            durationText = `${durationDays} Days`;
+        }
     }
-    localStorage.removeItem('demo_user');
-    localStorage.removeItem('admin_user');
-    document.getElementById('authTabs').style.display = 'flex';
-    document.getElementById('dashboardSection').classList.remove('active');
-    window.switchTab('login');
-    showAlert('Anda telah keluar.', false);
-};
 
-// Init
-initSession();
+    const count = Math.min(Math.max(parseInt(document.getElementById('inputCount').value, 10) || 1, 1), 50);
+    const note = document.getElementById('inputNote').value.trim();
+    const typeRadios = document.getElementsByName('keyType');
+    let keyType = 'Paid';
+    for (const r of typeRadios) {
+        if (r.checked) keyType = r.value;
+    }
 
+    const now = new Date();
+    const nowStr = formatDateDisplay(now);
+    const expDate = new Date(now.getTime() + (durationDays >= 3650 ? 36500 : durationDays) * 24 * 60 * 60 * 1000);
+    const expStr = durationDays >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+
+    const generated = [];
+    for (let i = 0; i < count; i++) {
+        const keyCode = generateRandomKey();
+        const newObj = {
+            id: 'key-' + Date.now() + '-' + i,
+            key_code: keyCode,
+            type: keyType,
+            duration_days: durationDays,
+            duration_text: durationText,
+            status: 'Active',
+            created_at: nowStr,
+            expires_at: expStr,
+            device: '-',
+            note: note || (keyType === 'Owner' ? 'Owner Master Key' : `Paket ${durationText}`)
+        };
+        generated.push(newObj);
+        allKeys.unshift(newObj);
+    }
+
+    // Save to Supabase Cloud Database if connected
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('license_keys').insert(
+                generated.map(k => ({
+                    key_code: k.key_code,
+                    duration_days: k.duration_days,
+                    note: `[${k.type}] ${k.note}`,
+                    is_used: false
+                }))
+            );
+        } catch (err) {
+            console.error('Supabase key insert error:', err);
+        }
+    }
+
+    // Call Vercel API asynchronously to keep backend in sync
+    fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            duration: durationDays,
+            count: count,
+            type: keyType,
+            note: note
+        })
+    }).catch(err => console.log('API sync background:', err));
+
+    updateStats();
+    renderKeysTable();
+
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+
+    showToast(`✅ Berhasil membuat ${count} key lisensi (${keyType})!`, true);
+    logActivity(`Membuat ${count} key baru (<b style="color:#10b981">${durationText}</b>, Tipe: ${keyType}).`);
+
+    // Reset optional note
+    document.getElementById('inputNote').value = '';
+}
+
+// Filter Selection
+function setFilter(filterType) {
+    currentFilter = filterType;
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-filter') === filterType);
+    });
+    renderKeysTable();
+}
+
+// Search Filter
+function handleSearch(val) {
+    currentSearch = val.trim();
+    renderKeysTable();
+}
+
+// Toggle Pause All Keys
+function handlePauseAllKeys() {
+    isPausedAll = !isPausedAll;
+    const btn = document.getElementById('btnPauseAll');
+    if (isPausedAll) {
+        btn.textContent = '▶️ Resume All Keys';
+        btn.style.color = '#10b981';
+        btn.style.borderColor = '#10b981';
+        allKeys.forEach(k => {
+            if (k.status === 'Active') k.status = 'Paused';
+        });
+        showToast('⏸️ Semua key aktif dijeda (Paused).', true);
+        logActivity('Semua key dijeda (Paused).');
+    } else {
+        btn.textContent = 'Pause All Keys';
+        btn.style.color = 'var(--amber-accent)';
+        btn.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        allKeys.forEach(k => {
+            if (k.status === 'Paused') k.status = 'Active';
+        });
+        showToast('▶️ Semua key aktif dilanjutkan (Resumed).', true);
+        logActivity('Semua key kembali aktif (Resumed).');
+    }
+    updateStats();
+    renderKeysTable();
+}
+
+// Revoke Single Key
+function handleRevokeKey(id) {
+    const item = allKeys.find(k => k.id === id);
+    if (!item) return;
+    item.status = 'Revoked';
+    updateStats();
+    renderKeysTable();
+    showToast(`⚠️ Key ${item.key_code} telah di-revoke.`, false);
+    logActivity(`Key <b style="color:#ef4444">${item.key_code}</b> di-revoke.`);
+
+    if (supabaseClient) {
+        supabaseClient.from('license_keys')
+            .update({ is_used: true, note: `[REVOKED] ${item.note || ''}` })
+            .eq('key_code', item.key_code);
+    }
+}
+
+// Delete Single Key
+function handleDeleteKey(id) {
+    const item = allKeys.find(k => k.id === id);
+    if (!item) return;
+    if (!confirm(`Hapus key lisensi ${item.key_code}?`)) return;
+
+    allKeys = allKeys.filter(k => k.id !== id);
+    updateStats();
+    renderKeysTable();
+    showToast(`🗑️ Key ${item.key_code} dihapus.`, true);
+    logActivity(`Key <b>${item.key_code}</b> dihapus.`);
+
+    if (supabaseClient) {
+        supabaseClient.from('license_keys')
+            .delete()
+            .eq('key_code', item.key_code);
+    }
+}
+
+// Switch Navigation View
+function switchNav(viewName) {
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === viewName);
+    });
+
+    const panels = {
+        keys: 'viewKeys',
+        license: 'viewLicense',
+        revenue: 'viewRevenue',
+        analytics: 'viewAnalytics',
+        activity: 'viewActivity',
+        settings: 'viewSettings',
+        owner: 'viewOwner'
+    };
+
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(panels[viewName]);
+    if (target) target.classList.add('active');
+
+    // Close mobile sidebar if open
+    document.getElementById('sidebar').classList.remove('open');
+}
+
+// Toggle Mobile Sidebar
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Lookup / Validate Key Form
+async function handleValidateLookup() {
+    const input = document.getElementById('lookupKeyInput');
+    const resBox = document.getElementById('lookupResult');
+    const val = input.value.trim().toUpperCase();
+    if (!val) return;
+
+    resBox.classList.remove('hidden');
+    resBox.innerHTML = '<span style="color:#9ca3af;">Memeriksa database lisensi...</span>';
+
+    try {
+        const res = await fetch('/api/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: val })
+        });
+        const data = await res.json();
+        if (data.success) {
+            resBox.innerHTML = `
+                <div style="background:#13281d; border:1px solid #10b981; padding:14px; border-radius:8px; margin-top:14px;">
+                    <div style="color:#10b981; font-weight:700; font-size:14px;">✅ LISENSI VALID & AKTIF</div>
+                    <div style="margin-top:6px; font-size:13px; color:#ffffff;">Key: <b>${data.key}</b></div>
+                    <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Role: ${data.role} | Durasi: ${data.expiry}</div>
+                </div>
+            `;
+        } else {
+            resBox.innerHTML = `
+                <div style="background:#281316; border:1px solid #ef4444; padding:14px; border-radius:8px; margin-top:14px;">
+                    <div style="color:#ef4444; font-weight:700; font-size:14px;">❌ LISENSI TIDAK VALID</div>
+                    <div style="margin-top:4px; font-size:12px; color:#d1d5db;">${data.message || 'Key tidak terdaftar.'}</div>
+                </div>
+            `;
+        }
+    } catch (e) {
+        resBox.innerHTML = `<div style="color:#ef4444; margin-top:10px;">Gagal menghubungi server validasi.</div>`;
+    }
+}
+
+// Export CSV
+function exportKeysCSV() {
+    let csv = 'Key,Type,Duration,Status,Created,Expires,Device,Note\n';
+    allKeys.forEach(k => {
+        csv += `"${k.key_code}","${k.type}","${k.duration_text}","${k.status}","${k.created_at}","${k.expires_at}","${k.device}","${k.note || ''}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `REGS_XD_KEYS_${Date.now()}.csv`;
+    a.click();
+    showToast('💾 Berhasil mendownload backup CSV.', true);
+}
+
+// Export JSON
+function exportKeysJSON() {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(allKeys, null, 2));
+    const a = document.createElement('a');
+    a.href = dataStr;
+    a.download = `REGS_XD_KEYS_${Date.now()}.json`;
+    a.click();
+    showToast('💾 Berhasil mendownload backup JSON.', true);
+}
+
+// Modal Login Functions
+function quickFillAdmin() {
+    document.getElementById('loginUsername').value = 'regsxd18';
+    document.getElementById('loginPass').value = 'leaaaimut1';
+}
+
+function handleModalLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('loginUsername').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+
+    if ((u === 'regsxd18' || u === 'regsxd18@cena-regs.com') && p === 'leaaaimut1') {
+        localStorage.setItem('regs_owner_logged', 'true');
+        document.getElementById('loginModal').classList.add('hidden');
+        showToast('👑 Selamat datang kembali, Owner RegsXD!', true);
+        logActivity('Owner login: <b>regsxd18</b>');
+    } else {
+        alert('Kredensial Owner Salah! Silakan gunakan akun Owner: regsxd18 / leaaaimut1');
+    }
+}
+
+function handleLogout() {
+    if (confirm('Apakah Anda ingin logout dari sesi Owner?')) {
+        localStorage.removeItem('regs_owner_logged');
+        document.getElementById('loginModal').classList.remove('hidden');
+        showToast('🚪 Sesi Owner telah ditutup.', false);
+    }
+}
+
+// Load real keys from Supabase Cloud
+async function fetchSupabaseKeys() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('license_keys')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+            const mapped = data.map(dbKey => {
+                const note = dbKey.note || '';
+                let type = 'Paid';
+                if (note.includes('[Owner]') || note.toLowerCase().includes('owner')) type = 'Owner';
+                else if (note.includes('[Free]') || note.toLowerCase().includes('free')) type = 'Free';
+
+                const days = dbKey.duration_days || 7;
+                let durText = `${days} Days`;
+                if (days === 1) durText = '1 Day';
+                else if (days >= 3650) durText = 'Lifetime';
+
+                const created = formatDateDisplay(dbKey.created_at);
+                const expDate = new Date(new Date(dbKey.created_at).getTime() + (days >= 3650 ? 36500 : days) * 86400000);
+                const expires = days >= 3650 ? '25 Aug 2126' : formatDateDisplay(expDate);
+
+                return {
+                    id: dbKey.id,
+                    key_code: dbKey.key_code,
+                    type: type,
+                    duration_days: days,
+                    duration_text: durText,
+                    status: dbKey.is_used ? 'Expired' : 'Active',
+                    created_at: created,
+                    expires_at: expires,
+                    device: dbKey.used_by || '-',
+                    note: note
+                };
+            });
+
+            // Combine database keys with seed keys (avoiding duplicate codes)
+            const existingCodes = new Set(mapped.map(m => m.key_code));
+            const remainingSeeds = INITIAL_KEYS.filter(s => !existingCodes.has(s.key_code));
+            allKeys = [...mapped, ...remainingSeeds];
+            updateStats();
+            renderKeysTable();
+        }
+    } catch (e) {
+        console.warn('Supabase fetch note:', e);
+    }
+}
+
+// Initialize Application
+document.addEventListener('DOMContentLoaded', () => {
+    // Populate Initial Keys
+    allKeys = [...INITIAL_KEYS];
+    updateStats();
+    renderKeysTable();
+
+    // Check Login State
+    const isLogged = localStorage.getItem('regs_owner_logged');
+    if (isLogged !== 'true') {
+        document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    // Fetch Cloud Keys
+    fetchSupabaseKeys();
+});

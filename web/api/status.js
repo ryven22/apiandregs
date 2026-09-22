@@ -1,7 +1,9 @@
+// Vercel Serverless Function: GET /api/status
+
 export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -9,8 +11,10 @@ export default function handler(req, res) {
 
     return res.status(200).json({
         status: 'online',
-        service: 'CENA X REGS • VERCEL WEB API',
-        version: '1.0.0',
+        service: 'REGS XD • CLOUD LICENSE & KEY MANAGEMENT API',
+        version: '2.0.0',
+        key_format: 'XXXX-XXXX-XXXX-XXXX (Random 16-Chars Alphanumeric)',
+        supported_types: ['Paid', 'Free', 'Owner'],
         supported_tiers: [
             { tier: '1D', name: '1 Day (1 Hari)', days: 1 },
             { tier: '3D', name: '3 Days (3 Hari)', days: 3 },
@@ -22,8 +26,8 @@ export default function handler(req, res) {
         endpoints: {
             status: 'GET /api/status',
             login: 'POST /api/login { username, password }',
-            validate: 'POST /api/validate { key: "REGSXD-1D-XXXX" }',
-            generate: 'POST /api/generate { duration: 1, count: 5, note: "..." }'
+            validate: 'POST /api/validate { key: "0VAW-LPE4-XSHQ-QUHJ" }',
+            generate: 'POST /api/generate { duration: 7, count: 1, type: "Paid", note: "VIP" }'
         },
         timestamp: new Date().toISOString()
     });

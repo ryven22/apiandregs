@@ -1,3 +1,12 @@
+// Vercel Serverless Function: POST /api/generate
+// Menghasilkan random key lisensi dengan format: XXXX-XXXX-XXXX-XXXX (contoh: 0VAW-LPE4-XSHQ-QUHJ)
+
+function generateRandomKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `${seg()}-${seg()}-${seg()}-${seg()}`;
+}
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -14,34 +23,41 @@ export default async function handler(req, res) {
         });
     }
 
-    const { duration = 30, count = 1, note = '' } = req.body || {};
-    const durationDays = parseInt(duration, 10);
-    const numKeys = Math.min(Math.max(parseInt(count, 10) || 1, 1), 50);
+    const { 
+        duration = 7, 
+        count = 1, 
+        note = '', 
+        type = 'Paid' 
+    } = req.body || {};
 
-    // Prefix tag durasi
-    let tag = '30D';
-    if (durationDays === 1) tag = '1D';
-    else if (durationDays === 3) tag = '3D';
-    else if (durationDays === 7) tag = '7D';
-    else if (durationDays === 15) tag = '15D';
-    else if (durationDays === 30) tag = '30D';
-    else if (durationDays >= 3650) tag = 'LIFE';
+    const durationDays = parseInt(duration, 10) || 7;
+    const numKeys = Math.min(Math.max(parseInt(count, 10) || 1, 1), 50);
+    const keyType = (['Paid', 'Free', 'Owner'].includes(type)) ? type : 'Paid';
+
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + (durationDays >= 3650 ? 36500 : durationDays) * 24 * 60 * 60 * 1000);
 
     const newKeys = [];
     for (let i = 0; i < numKeys; i++) {
-        const randStr = Math.random().toString(36).substring(2, 6).toUpperCase() +
-                        Math.floor(100 + Math.random() * 900);
+        const keyCode = generateRandomKey();
+        const formattedNote = `[${keyType}] ${note ? note : (keyType === 'Owner' ? 'Owner Master Key' : `Paket ${durationDays >= 3650 ? 'Lifetime' : durationDays + ' Days'}`)}`.trim();
+        
         newKeys.push({
-            key_code: `REGSXD-${tag}-${randStr}`,
+            key_code: keyCode,
             duration_days: durationDays,
-            note: note || `Paket ${durationDays >= 3650 ? 'LIFETIME' : durationDays + ' Hari'}`,
+            type: keyType,
+            note: formattedNote,
             is_used: false,
-            created_at: new Date().toISOString()
+            created_at: now.toISOString(),
+            expires_at: expiryDate.toISOString()
         });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    // Supabase Configuration
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://maghrxnyavkittygojnn.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                        process.env.SUPABASE_ANON_KEY || 
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZ2hyeG55YXZraXR0eWdvam5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzE4MTIsImV4cCI6MjEwNDc0NzgxMn0.Vr1usXkl6jHzKujpEi8SxWPA2qV8mNrW5g6imXj-tso';
 
     if (supabaseUrl && supabaseKey) {
         try {
@@ -60,14 +76,15 @@ export default async function handler(req, res) {
                 })))
             });
         } catch (err) {
-            console.error('Error inserting keys to supabase:', err);
+            console.error('Error inserting random keys to supabase:', err);
         }
     }
 
     return res.status(200).json({
         success: true,
-        message: `Berhasil membuat ${newKeys.length} key lisensi.`,
+        message: `Berhasil membuat ${newKeys.length} key lisensi (${keyType}).`,
         duration_days: durationDays,
+        type: keyType,
         keys: newKeys.map(k => k.key_code),
         data: newKeys
     });
